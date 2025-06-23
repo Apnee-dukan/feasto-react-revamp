@@ -1,45 +1,38 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import CookiesPolicy from "./components/CookiesPolicy";
-import ReturnPolicy from "./components/ReturnPolicy";
-import About from "./components/About";
-import PrivacyPolicy from "./components/PrivacyPolicy";
-import TermsAndConditions from "./components/TermsAndConditions";
-import Guidelines from "./components/Guidelines";
-import Home from "./components/Home";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './components/Home';
+import About from './components/About';
+import Contact from './components/Contact';
+import RestaurantList from './components/RestaurantList';
+import Footer from './components/Footer';
+import ReturnPolicy from './components/ReturnPolicy';
+import CookiePolicy from './components/CookiesPolicy';
+import TermsAndConditions from './components/TermsAndConditions';
+import Guidelines from './components/Guidelines';
+import PrivacyPolicy from './components/PrivacyPolicy';
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+function App() {
+  return (
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <BrowserRouter>
+      <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="/home" element={<Home />} />
-          <Route path="/cookies-policy" element={<CookiesPolicy />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/restaurants" element={<RestaurantList />} />
           <Route path="/returns" element={<ReturnPolicy />} />
           <Route path="/about" element={<About />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
           <Route path="/guidelines" element={<Guidelines />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/termsandconditions" element={<TermsAndConditions />} />
+          <Route path="/policy" element={<PrivacyPolicy />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </BrowserRouter>
+      </main>
       <Footer />
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </div>
+  );
+}
 
 export default App;

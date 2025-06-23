@@ -54,7 +54,7 @@ const Contact = () => {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
+              {/* <div className="flex items-start space-x-4">
                 <div className="bg-orange-600 p-3 rounded-lg">
                   <Clock size={20} />
                 </div>
@@ -66,7 +66,7 @@ const Contact = () => {
                     <p>Public Holidays: 10:00 AM - 10:00 PM</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Social media */}

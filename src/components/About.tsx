@@ -6,7 +6,7 @@ const About = () => {
       {/* Hero Section */}
       <div
         className="bg-cover bg-center h-[350px] flex items-center justify-center relative"
-        style={{ backgroundImage: "url('/dist/images/banner-about.jpg')" }}
+        style={{ backgroundImage: "url('../../public/dist/images/banner-about.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 text-center text-white">

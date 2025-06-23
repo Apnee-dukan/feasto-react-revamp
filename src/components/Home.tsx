@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// import { useHistory } from "react-router-dom";
 import {
   MapPin,
   Coffee,
@@ -8,8 +7,6 @@ import {
   User,
   QrCode,
 } from "lucide-react";
-
-// Extend the Window interface to include google
 declare global {
   interface Window {
     google?: any;

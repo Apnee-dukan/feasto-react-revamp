@@ -6,7 +6,7 @@ const PrivacyPolicy = () => {
       {/* Banner Section (optional image) */}
       <div
   className="h-[250px] bg-cover bg-center flex items-center justify-center relative"
-  style={{ backgroundImage: "url('/dist/images/banner-static.jpg')" }} // Use your actual image path
+  style={{ backgroundImage: "url('/public/dist/images/banner-static.jpg')" }} // Use your actual image path
 >
   <div className="absolute inset-0 bg-black/50"></div>
   <h1 className="relative z-10 text-white text-3xl md:text-4xl font-bold">Privacy Policy</h1>

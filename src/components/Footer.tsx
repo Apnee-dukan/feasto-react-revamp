@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MapPin, Phone, Mail, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -34,25 +35,23 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><a href="#home" className="text-gray-400 hover:text-orange-600 transition-colors">Home</a></li>
-              <li><a href="#menu" className="text-gray-400 hover:text-orange-600 transition-colors">Menu</a></li>
-              <li><a href="#about" className="text-gray-400 hover:text-orange-600 transition-colors">About Us</a></li>
-              <li><a href="#contact" className="text-gray-400 hover:text-orange-600 transition-colors">Contact</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Reservations</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Private Events</a></li>
+              <li><Link to="/home" className="text-gray-400 hover:text-orange-600 transition-colors">Register Merchant</Link></li>
+              <li><Link to="/menu" className="text-gray-400 hover:text-orange-600 transition-colors">Merchant Login</Link></li>
+              <li><Link to="#" className="text-gray-400 hover:text-orange-600 transition-colors">Feedback</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-orange-600 transition-colors">Contact Us</Link></li>
+              <li><Link to="/guidelines" className="text-gray-400 hover:text-orange-600 transition-colors">Business Owner Guidelines</Link></li>
             </ul>
           </div>
 
           {/* Menu categories */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Our Menu</h4>
+            <h4 className="text-lg font-semibold mb-4">Useful Links</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Rice Dishes</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Noodles</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Curries</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Grilled Items</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Desserts</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Beverages</a></li>
+              <li><Link to="/about" className="text-gray-400 hover:text-orange-600 transition-colors">About us</Link></li>
+              <li><Link to="/returns" className="text-gray-400 hover:text-orange-600 transition-colors">Refund & Cancellation</Link></li>
+              <li><Link to="/policy" className="text-gray-400 hover:text-orange-600 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/termsandconditions" className="text-gray-400 hover:text-orange-600 transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/cookies" className="text-gray-400 hover:text-orange-600 transition-colors">Cookies Policy</Link></li>
             </ul>
           </div>
 
@@ -76,15 +75,6 @@ const Footer = () => {
                 <span className="text-gray-400">info@feasto.com.my</span>
               </div>
             </div>
-
-            {/* Opening hours */}
-            {/* <div className="mt-6">
-              <h5 className="font-semibold mb-2">Opening Hours</h5>
-              <div className="text-sm text-gray-400 space-y-1">
-                <p>Mon - Fri: 11:00 AM - 10:00 PM</p>
-                <p>Sat - Sun: 10:00 AM - 11:00 PM</p>
-              </div>
-            </div> */}
           </div>
         </div>
 

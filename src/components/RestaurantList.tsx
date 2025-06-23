@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { Star, Clock, MapPin, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
