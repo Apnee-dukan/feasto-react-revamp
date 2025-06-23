@@ -21,22 +21,6 @@ const Navbar = () => {
   return (
     <>
       <nav className="bg-white shadow-lg sticky top-0 z-50">
-        {/* Top bar with contact info and location */}
-        <div className="bg-orange-600 text-white py-2 px-4 text-sm">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <LocationPicker onLocationSelect={handleLocationSelect} />
-              <div className="hidden md:flex items-center space-x-1">
-                <Phone size={14} />
-                <span>+60 3-1234 5678</span>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <span>Open Daily: 11:00 AM - 10:00 PM</span>
-            </div>
-          </div>
-        </div>
-
         {/* Main navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -62,7 +46,7 @@ const Navbar = () => {
             {/* Desktop navigation */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-center space-x-6">
-                <a href="#home" className="text-gray-900 hover:text-orange-600 px-3 py-2 text-sm font-medium transition-colors">
+                <a href="/home" className="text-gray-900 hover:text-orange-600 px-3 py-2 text-sm font-medium transition-colors">
                   Home
                 </a>
                 <a href="#restaurants" className="text-gray-900 hover:text-orange-600 px-3 py-2 text-sm font-medium transition-colors">

@@ -78,13 +78,13 @@ const Footer = () => {
             </div>
 
             {/* Opening hours */}
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <h5 className="font-semibold mb-2">Opening Hours</h5>
               <div className="text-sm text-gray-400 space-y-1">
                 <p>Mon - Fri: 11:00 AM - 10:00 PM</p>
                 <p>Sat - Sun: 10:00 AM - 11:00 PM</p>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
