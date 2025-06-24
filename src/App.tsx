@@ -12,6 +12,7 @@ import TermsAndConditions from './components/TermsAndConditions';
 import Guidelines from './components/Guidelines';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Items from './components/Items';
+import Cart from './components/Cart';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/restaurants" element={<RestaurantList />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/items" element={<Items />} />
           <Route path="/returns" element={<ReturnPolicy />} />
           <Route path="/about" element={<About />} />
