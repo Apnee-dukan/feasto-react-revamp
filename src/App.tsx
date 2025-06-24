@@ -11,6 +11,7 @@ import CookiePolicy from './components/CookiesPolicy';
 import TermsAndConditions from './components/TermsAndConditions';
 import Guidelines from './components/Guidelines';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import Items from './components/Items';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/restaurants" element={<RestaurantList />} />
+          <Route path="/items" element={<Items />} />
           <Route path="/returns" element={<ReturnPolicy />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
