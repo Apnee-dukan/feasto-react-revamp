@@ -19,7 +19,8 @@ const Navbar = () => {
           {/* Left Section: Logo */}
           <div className="flex items-center space-x-4 flex-shrink-0">
             <Link to="/" className="text-2xl font-bold text-orange-600">
-              Feasto
+              {/* Feasto */}
+              <img src="/dist/images/logo/logo-orange.png" alt="Who We Are" style={{height: '3rem'}} />
             </Link>
           </div>
 
