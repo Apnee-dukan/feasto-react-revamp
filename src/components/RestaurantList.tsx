@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Star, Clock, MapPin, Heart, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
 
 interface TaxDetail {
   id: string;
@@ -28,6 +29,7 @@ const RestaurantListPage = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchRestaurants = async (q?: string) => {
     setLoading(true);
@@ -65,6 +67,9 @@ const RestaurantListPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchRestaurants(query);
+  };
+  const handleMenuButtonClick = (restaurant: Restaurant) => {
+    navigate(`/items?branch=${restaurant.branch_id}`);
   };
 
   return (
@@ -145,7 +150,7 @@ const RestaurantListPage = () => {
                     </div>
                   </div>
 
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                  <Button onClick={() => handleMenuButtonClick(r)} className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                     View Menu
                   </Button>
                 </div>

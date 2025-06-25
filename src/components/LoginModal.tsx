@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -28,10 +29,45 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Login logic here
+    const documenturl = "https://feasto.com.my/web/api/";
+    const API_HEADER = {
+    headers: {
+      'x-api-key': 'Sdrops!23',
+      'Access-Control-Allow-Origin': '*',
+      crossdomain: true,
+    },
+  };
+    const URL =
+      documenturl + "auth/validate?email=" + loginData.email + "&password=" + loginData.password;
+    axios
+      .get(URL, API_HEADER)
+      .then((res) => {
+        console.log(res);
+        if (res.data.status) {
+          localStorage.setItem("userid", res.data.result[0].id);
+          let userName = res.data.result[0].f_name;
+          if (res.data.result[0].l_name) {
+            userName += " " + res.data.result[0].l_name;
+          }
+          let userDetails = {
+            name: userName,
+            mobile: res.data.result[0].mobile,
+          };
+          localStorage.setItem("userDetails", JSON.stringify(userDetails));
+          window.location.href = document.referrer;
+          // this.setState({ list: res.message })
+        } else {
+          // this.setState({ loginError: res.data.message });
+          console.log(res);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
     console.log('Login attempt:', loginData);
   };
 
+  
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     // Signup logic here

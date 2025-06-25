@@ -13,6 +13,7 @@ import Guidelines from './components/Guidelines';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Items from './components/Items';
 import Cart from './components/Cart';
+import ItemDetails from './components/ItemDetails';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/cookies" element={<CookiePolicy />} />
           <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/itemdetails" element={<ItemDetails />} />
           <Route path="/termsandconditions" element={<TermsAndConditions />} />
           <Route path="/policy" element={<PrivacyPolicy />} />
           <Route path="*" element={<Navigate to="/" />} />

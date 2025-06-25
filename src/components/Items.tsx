@@ -142,11 +142,13 @@ const Items: React.FC = () => {
                 }}
                 className="cursor-pointer"
               >
-                <img
-                  src={item.item_img || '/dist/images/logo/feasto-orange-1.png'}
-                  alt={item.name}
-                  className="w-full h-40 object-cover"
-                />
+                <div className="flex justify-center items-center">
+                  <img
+                    src={item.item_img || '/dist/images/logo/feasto-orange-1.png'}
+                    alt={item.name}
+                    className="w-[10rem] h-40 object-cover"
+                  />
+                </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-lg truncate">{item.name}</h3>
                   <div className="flex items-center justify-between mt-2">

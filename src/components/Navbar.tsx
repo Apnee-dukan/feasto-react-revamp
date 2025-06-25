@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Menu, X, ShoppingCart, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
 import { Button } from '@/components/ui/button';
 
@@ -9,6 +9,23 @@ const NAV_ITEMS = ['restaurants', 'about', 'contact'];
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userDropdown, setUserDropdown] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userDetails');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userid');
+    localStorage.removeItem('userDetails');
+    setUser(null);
+    navigate('/');
+  };
 
   return (
     <>
@@ -42,6 +59,29 @@ const Navbar = () => {
             <ShoppingCartIcon />
 
             {/* Login Button */}
+            {user ? (
+            <div className="relative">
+              <Button variant="ghost" onClick={() => setUserDropdown(!userDropdown)}>
+                <User size={16} /> {user.name}
+              </Button>
+              {userDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10">
+                  <Link
+                    to="/AccountDetails"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Account Details
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
             <Button
               variant="ghost"
               onClick={() => setLoginModal(true)}
@@ -50,6 +90,7 @@ const Navbar = () => {
               <User size={16} />
               <span>Login</span>
             </Button>
+          )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -95,13 +136,17 @@ const Navbar = () => {
   );
 };
 
-const ShoppingCartIcon = () => (
-  <button className="relative p-2 text-gray-900 hover:text-orange-600">
-    <ShoppingCart size={20} />
-    <span className="absolute -top-1 -right-1 bg-orange-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-      0
-    </span>
-  </button>
-);
+const ShoppingCartIcon = () => {
+  const count = localStorage.getItem('no_of_cart_items') || '0';
+  return (
+    <Link to={'/cart'} className="relative p-2 text-gray-900 hover:text-orange-600">
+      <ShoppingCart size={20} />
+      <span className="absolute -top-1 -right-1 bg-orange-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+        {count}
+      </span>
+    </Link>
+  );
+};
+
 
 export default Navbar;
