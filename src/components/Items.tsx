@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import queryString from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
+
 
 const Items: React.FC = () => {
   const location = useLocation();
@@ -172,10 +174,12 @@ const Items: React.FC = () => {
 
       {/* Cart Floating Button */}
       <button
-        onClick={() => navigate('/cartdetails')}
-        className="fixed bottom-6 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition"
+        onClick={() => navigate('/cart')}
+        style={{ backgroundColor: 'rgb(255 113 0)' }}
+        className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition"
       >
-        🛒
+        {/* 🛒 */}
+        <ShoppingCart />
       </button>
     </div>
   );
