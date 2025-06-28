@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { X, Plus, Minus } from 'lucide-react';
+import { parse } from 'path';
 
 const Cart: React.FC = () => {
   const [cartData, setCartData] = useState<any>({});
@@ -53,7 +54,7 @@ const Cart: React.FC = () => {
 
   const updateCart = (newItems: any[]) => {
     const subtotal = newItems.reduce((sum, i) => {
-      const price = parseFloat(i.item_price ?? 0);
+      const price = parseFloat(i.itemDetail?.price ?? 0);
       const extra = parseFloat(i.extra_amount ?? 0);
       const total = (price + extra) * i.qty;
       i.totalPrice = total;
@@ -64,9 +65,8 @@ const Cart: React.FC = () => {
       ...cartData,
       cartItemLists: newItems,
       subTotal: subtotal.toFixed(2),
-      grandTotal: subtotal.toFixed(2),
+      grandTotal: (subtotal + parseFloat(cartData?.totalTaxAmount ?? 0)).toFixed(2),
     };
-
     setItems(newItems);
     setCartData(updated);
     localStorage.setItem('cartDetailsData', JSON.stringify(updated));
@@ -77,8 +77,8 @@ const Cart: React.FC = () => {
     const newArr = [...items];
     const item = newArr[idx];
 
-    const item_price = parseInt(item.item_price ?? 0);
-    const extra_amount = parseInt(item.extra_amount ?? 0);
+    const item_price = parseFloat(item.itemDetail?.price ?? 0);
+    const extra_amount = parseFloat(item.extra_amount ?? 0);
     const newQty = Math.max(0, item.qty + delta);
 
     if (newQty === 0) {
@@ -87,7 +87,6 @@ const Cart: React.FC = () => {
       item.qty = newQty;
       item.totalPrice = (item_price + extra_amount) * newQty;
     }
-
     updateCart(newArr);
   };
 
@@ -96,6 +95,7 @@ const Cart: React.FC = () => {
     localStorage.removeItem('branch_id');
     localStorage.removeItem('no_of_cart_items');
     updateCart([]);
+    setCartData({});
     setStore(null);
   };
 
@@ -149,7 +149,7 @@ const Cart: React.FC = () => {
                 <div>
                   <h2 className="font-medium">{it.itemDetail?.name}</h2>
                   <p className="text-sm text-gray-600">
-                    ₹ {(parseFloat(it.item_price ?? 0) + parseFloat(it.extra_amount ?? 0)).toFixed(2)} × {it.qty}
+                    ₹ {(parseFloat(it.itemDetail?.price ?? 0) + parseFloat(it.extra_amount ?? 0)).toFixed(2)} × {it.qty}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

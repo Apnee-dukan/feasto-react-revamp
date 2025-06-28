@@ -85,7 +85,7 @@ const ItemDetails: React.FC = () => {
           const d = res.data.item_lists[0] as ItemData;
           setItem(d);
           setCartItem({
-            itemDetail: { id: d.id, name: d.name },
+            itemDetail: { id: d.id, name: d.name, price: d.price },
             variant: d.is_varient === '1' ? d.varient_details[0] : null,
             ingredients: [],
             toppings: [],
@@ -112,7 +112,6 @@ const ItemDetails: React.FC = () => {
     const cart = stored
       ? JSON.parse(stored)
       : { cartItemLists: [], subTotal: 0, taxDetails: [], totalTaxAmount: 0 };
-
     cart.cartItemLists.push(cartItem);
     const newSubtotal = cart.cartItemLists.reduce((a: number, c: any) => a + parseFloat(c.totalPrice), 0);
     cart.subTotal = newSubtotal.toFixed(2);

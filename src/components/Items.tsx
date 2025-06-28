@@ -149,19 +149,10 @@ const Items: React.FC = () => {
                     className="w-[10rem] h-40 object-cover"
                   />
                 </div>
-                <div className="p-3">
+                <div className="p-3 flex flex-row justify-between items-start">
                   <h3 className="font-semibold text-lg truncate">{item.name}</h3>
                   <div className="flex items-center justify-between mt-2">
-                    <span
-                      className={`text-xs font-bold ${
-                        item.item_type_name === 'Non-Veg' ? 'text-red-600' : 'text-green-600'
-                      }`}
-                    >
-                      {item.item_type_name}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {branchDetails?.[0]?.currency_symbol || 'RM'} {item.price}
-                    </span>
+                    {item.item_type_name === "Non-Veg" ? (<img src='/dist/images/logo/non-veg.png' alt="Non-Veg" className="w-4 h-4" />) : (<img src='/dist/images/logo/veg.png' alt="Veg" className="w-4 h-4" />)}
                   </div>
                 </div>
               </div>
