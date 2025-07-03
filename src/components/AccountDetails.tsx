@@ -51,28 +51,22 @@ export default function AccountDetails() {
     setOtpValue('');
   }
 
-  function loadOrderViewDetails(orderID) {
+  function loadOrderViewDetails(orderID: string) {
     const documenturl = 'https://feasto.com.my/web/api/';
-    const API_HEADER = {
+    const URL = `${documenturl}customer/customer/loadOrderDetails?order_id=${orderID}`;
+    axios.get(URL, {
       headers: {
         'x-api-key': 'Sdrops!23',
         'Access-Control-Allow-Origin': '*',
         'crossdomain': true,
         'Content-Type': 'application/json;charset=UTF-8',
       }
-    };
-    const URL =
-      documenturl + "customer/customer/loadOrderDetails?order_id=" + orderID;
-    axios
-      .get(URL, API_HEADER)
-      .then((res) => {
-        if (res.data.status) {
-          setViewOrderDetails(res.data.Data);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    }).then(res => {
+      if (res.data.status) {
+        setViewOrderDetails(res.data.Data);
+        setOrderDetailsDialog(true);
+      }
+    }).catch(console.error);
   }
 
   return (
@@ -208,23 +202,71 @@ export default function AccountDetails() {
 
       {/* Order Details View */}
       {viewOrderDetails && (
-        // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        //   <div className="bg-white p-4 rounded shadow-lg">
-        //     <h2 className="text-xl font-bold mb-4">Order Details</h2>
-        //     <pre>{JSON.stringify(viewOrderDetails, null, 2)}</pre>
-        //     <button onClick={() => setViewOrderDetails(null)} className="mt-4 bg-gray-200 px-4 py-2 rounded">Close</button>
-        //   </div>
-        // </div>
+        <Dialog open={orderDetailsDialog} onOpenChange={() => setOrderDetailsDialog(false)}>
+          <DialogContent className="w-full max-w-3xl mx-auto mt-10 bg-white rounded-lg shadow-lg p-6 overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <h2 className="text-xl font-bold">Order #{viewOrderDetails.sales_no}</h2>
+              {/* <button onClick={() => setOrderDetailsDialog(false)} className="text-gray-500 hover:text-red-500">✕</button> */}
+            </div>
 
-        <Dialog open={orderDetailsDialog} onOpenChange={()=> setOrderDetailsDialog(false)}>
-          <DialogOverlay />
-          <DialogContent className="relative w-full max-w-sm mx-auto mt-16 bg-white p-4 rounded shadow-lg">
-                     
-          <div className="mt-6 flex justify-end space-x-2">
-            <button className="px-4 py-2 bg-gray-200 rounded" onClick={()=> setOrderDetailsDialog(false)}>Close</button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Restaurant</h3>
+                <p className="text-sm text-gray-600">{viewOrderDetails.branchName}</p>
+                <p className="text-sm text-gray-500">{viewOrderDetails.branchAddress}</p>
+              </div>
+
+              {parseInt(viewOrderDetails.deliveryStatus) ? (
+                <div>
+                  <h3 className="text-lg font-semibold">Delivery Address</h3>
+                  <p className="text-sm text-gray-600">{viewOrderDetails.address_type_name}</p>
+                  <p className="text-sm text-gray-500">{viewOrderDetails.deliveryAddress}</p>
+                </div>
+              ) : null}
+
+              <div>
+                <h3 className="text-lg font-semibold">Status</h3>
+                <p className="text-sm text-green-600 font-medium">On Time</p>
+                <p className="text-sm text-gray-500">{viewOrderDetails.serviceTypeName} on {viewOrderDetails.updatedON}</p>
+              </div>
+
+              <div className="divide-y">
+                {viewOrderDetails.itemDetails.map((itemRow, i) => (
+                  <div key={i} className="py-3 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <img src={itemRow.item_type_img} alt="" className="w-5 h-5" />
+                      <span>{itemRow.item_name} × {itemRow.item_quantity}</span>
+                    </div>
+                    <div className="text-sm font-medium">
+                      {viewOrderDetails.currency_symbol} {itemRow.total_amount}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 space-y-2 text-sm text-gray-700">
+                <div className="flex justify-between">
+                  <span>Sub-Total</span>
+                  <span>{viewOrderDetails.currency_symbol} {viewOrderDetails.subTotal}</span>
+                </div>
+                {viewOrderDetails.taxDetails?.map((taxRow, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span>{taxRow.name} ({taxRow.percentage}%)</span>
+                    <span>{viewOrderDetails.currency_symbol} {taxRow.amount}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-semibold border-t pt-2">
+                  <span>Total</span>
+                  <span>{viewOrderDetails.currency_symbol} {viewOrderDetails.net_amount}</span>
+                </div>
+              </div>
+
+              <div className="mt-6 text-right">
+                <button className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded" onClick={() => setOrderDetailsDialog(false)}>Close</button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
