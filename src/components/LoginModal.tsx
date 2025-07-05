@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import OtpModal from "./OtpModal";
-import { on } from "events";
+import toast from "react-hot-toast";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -22,14 +22,17 @@ interface LoginModalProps {
 const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [signupError, setSignupError] = useState("");
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
   const [signupData, setSignupData] = useState({
-    name: "",
+    f_name: "",
     email: "",
-    // phone: '',
+    mobile: "",
+    code_mobile: "+60",
     password: "",
     confirmPassword: "",
   });
@@ -75,22 +78,64 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       .catch((error) => {
         console.log(error);
       });
-    console.log("Login attempt:", loginData);
   };
 
   // OTP handler
   const handleOtpVerify = (otpCode: string) => {
     console.log("OTP Entered:", otpCode);
-    // Call OTP verification API here
+    if (userId) {
+      const documenturl = "https://feasto.com.my/web/api/";
+      const API_HEADER = {
+        headers: {
+          "x-api-key": "Sdrops!23",
+          "Access-Control-Allow-Origin": "*",
+          crossdomain: true,
+        },
+      };
+      const URL =
+        documenturl + "customer/customer/otpVerification?user_id=" + userId + "&otp=" + otpCode;
+      axios
+        .get(URL, API_HEADER)
+        .then((res) => {
+          console.log(res);
+          if (res.data.status) {
+            toast.success("OTP Verified Successfully!");
+            setOtpModalOpen(false);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
     setOtpModalOpen(false);
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    // Signup logic here
-    console.log("Signup attempt:", signupData);
-    onClose();
-    setOtpModalOpen(true);
+    const documenturl = "https://feasto.com.my/web/api/";
+    const API_HEADER = {
+      headers: {
+        "x-api-key": "Sdrops!23",
+        "Access-Control-Allow-Origin": "*",
+        crossdomain: true,
+      },
+    };
+    const URL =
+      documenturl + "customer/customer/signup";
+    axios
+      .post(URL, signupData, API_HEADER)
+      .then((res) => {
+        if (res.data.success) {
+          setUserId(res.data.user_id);
+          onClose();
+          setOtpModalOpen(true);       
+        } else {
+          setSignupError("User Already Registered!");
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
@@ -171,9 +216,9 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     id="signup-name"
                     type="text"
                     placeholder="Enter your full name"
-                    value={signupData.name}
+                    value={signupData.f_name}
                     onChange={(e) =>
-                      setSignupData({ ...signupData, name: e.target.value })
+                      setSignupData({ ...signupData, f_name: e.target.value })
                     }
                     required
                   />
@@ -191,17 +236,38 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     required
                   />
                 </div>
-                {/* <div>
-                <Label htmlFor="signup-phone">Phone Number</Label>
-                <Input
-                  id="signup-phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={signupData.phone}
-                  onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                  required
-                />
-              </div> */}
+                <div>
+                  <Label htmlFor="signup-phone">Phone Number</Label>
+                  <div className="flex gap-2">
+                    <select
+                      className="border rounded px-3 py-2"
+                      value={signupData.code_mobile || "+60"}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          code_mobile: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="+60">🇲🇾 +60 (Malaysia)</option>
+                      <option value="+91">🇮🇳 +91 (India)</option>
+                      <option value="+1">🇺🇸 +1 (USA)</option>
+                      <option value="+44">🇬🇧 +44 (UK)</option>
+                      <option value="+61">🇦🇺 +61 (Australia)</option>
+                    </select>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      value={signupData.mobile}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, mobile: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
@@ -245,6 +311,9 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     required
                   />
                 </div>
+                {signupError && (
+                  <p className="text-red-600 text-sm">{signupError}</p>
+                )}
                 <Button
                   type="submit"
                   className="w-full bg-orange-600 hover:bg-orange-700"
@@ -259,7 +328,7 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       <OtpModal
         isOpen={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
-        email={signupData.email}
+        email={signupData.code_mobile + signupData.mobile}
         onVerifyOtp={handleOtpVerify}
       />
     </>

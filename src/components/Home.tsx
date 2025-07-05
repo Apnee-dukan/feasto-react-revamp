@@ -6,6 +6,8 @@ import {
   Utensils,
   User,
   QrCode,
+  Download,
+  CloudDownload 
 } from "lucide-react";
 declare global {
   interface Window {
@@ -138,6 +140,11 @@ const Home = () => {
               title="Menu Listing"
               description="See the list of all menu items"
             />
+            <AppFeatureList
+              icon={<Download size={32} />}
+              title={"Download Android App"}
+              description={"Download the Feasto app from Google Play Store"}
+            />
           </div>
           <div className="flex-1 flex justify-center">
             <img
@@ -161,6 +168,11 @@ const Home = () => {
               icon={<Utensils size={32} />}
               title="Enjoy"
               description="Enjoy Dine‑In service seamlessly"
+            />
+            <AppFeatureList
+              icon={<CloudDownload size={32} />}
+              title={"Download IOS App"}
+              description={"Download the Feasto app from Apple App Store"}
             />
           </div>
         </div>
