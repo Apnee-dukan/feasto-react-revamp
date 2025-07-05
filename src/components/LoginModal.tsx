@@ -56,7 +56,6 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     axios
       .get(URL, API_HEADER)
       .then((res) => {
-        console.log(res);
         if (res.data.status) {
           localStorage.setItem("userid", res.data.result[0].id);
           let userName = res.data.result[0].f_name;
@@ -70,19 +69,15 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
           localStorage.setItem("userDetails", JSON.stringify(userDetails));
           window.location.href = document.referrer;
           // this.setState({ list: res.message })
-        } else {
-          // this.setState({ loginError: res.data.message });
-          console.log(res);
         }
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
       });
   };
 
   // OTP handler
   const handleOtpVerify = (otpCode: string) => {
-    console.log("OTP Entered:", otpCode);
     if (userId) {
       const documenturl = "https://feasto.com.my/web/api/";
       const API_HEADER = {
@@ -97,14 +92,13 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       axios
         .get(URL, API_HEADER)
         .then((res) => {
-          console.log(res);
           if (res.data.status) {
             toast.success("OTP Verified Successfully!");
             setOtpModalOpen(false);
           }
         })
         .catch((error) => {
-          console.log(error);
+          console.error(error);
         });
     }
     setOtpModalOpen(false);
@@ -134,7 +128,7 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         }
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
       });
   };
 
@@ -241,7 +235,7 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                   <div className="flex gap-2">
                     <select
                       className="border rounded px-3 py-2"
-                      value={signupData.code_mobile || "+60"}
+                      value={signupData.code_mobile || "60"}
                       onChange={(e) =>
                         setSignupData({
                           ...signupData,
@@ -249,11 +243,11 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                         })
                       }
                     >
-                      <option value="+60">🇲🇾 +60 (Malaysia)</option>
-                      <option value="+91">🇮🇳 +91 (India)</option>
-                      <option value="+1">🇺🇸 +1 (USA)</option>
-                      <option value="+44">🇬🇧 +44 (UK)</option>
-                      <option value="+61">🇦🇺 +61 (Australia)</option>
+                      <option value="60">🇲🇾 +60 (Malaysia)</option>
+                      <option value="91">🇮🇳 +91 (India)</option>
+                      <option value="1">🇺🇸 +1 (USA)</option>
+                      <option value="44">🇬🇧 +44 (UK)</option>
+                      <option value="61">🇦🇺 +61 (Australia)</option>
                     </select>
                     <Input
                       id="signup-phone"
@@ -328,7 +322,7 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       <OtpModal
         isOpen={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
-        email={signupData.code_mobile + signupData.mobile}
+        email={"+"+signupData.code_mobile+" "+signupData.mobile}
         onVerifyOtp={handleOtpVerify}
       />
     </>

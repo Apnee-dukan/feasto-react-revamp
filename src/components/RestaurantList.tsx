@@ -29,23 +29,46 @@ const RestaurantListPage = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const navigate = useNavigate();
 
-  const fetchRestaurants = async (q?: string) => {
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        },
+        (err) => {
+          console.error('Error fetching location:', err);
+          // Fallback to KL
+          setLocation({ latitude: 3.139, longitude: 101.6869 });
+        }
+      );
+    } else {
+      console.error("Geolocation not supported.");
+      setLocation({ latitude: 3.139, longitude: 101.6869 });
+    }
+  }, []);
+
+  const fetchRestaurants = async (q?: string, lat?: number, lng?: number) => {
     setLoading(true);
     try {
       const baseUrl = `https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails`;
       const url = q
         ? `${baseUrl}?restaurant_name=${encodeURIComponent(q)}`
-        : `${baseUrl}?currentLatitude=3.139&currentLongitude=101.6869`;
+        : `${baseUrl}?currentLatitude=${lat}&currentLongitude=${lng}`;
 
       const res = await axios.get(url, {
         headers: {
-                'x-api-key': 'Sdrops!23',
-                'Access-Control-Allow-Origin': '*',
-                'crossdomain': true,
-                'Content-Type': 'application/json;charset=UTF-8'
-            }
+          'x-api-key': 'Sdrops!23',
+          'Access-Control-Allow-Origin': '*',
+          crossdomain: true,
+          'Content-Type': 'application/json;charset=UTF-8'
+        }
       });
 
       if (res.data?.status && Array.isArray(res.data.Data)) {
@@ -61,13 +84,18 @@ const RestaurantListPage = () => {
   };
 
   useEffect(() => {
-    fetchRestaurants();
-  }, []);
+    if (location) {
+      fetchRestaurants(undefined, location.latitude, location.longitude);
+    }
+  }, [location]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchRestaurants(query);
+    if (location) {
+      fetchRestaurants(query, location.latitude, location.longitude);
+    }
   };
+
   const handleMenuButtonClick = (restaurant: Restaurant) => {
     navigate(`/items?branch=${restaurant.branch_id}`);
   };
@@ -107,7 +135,7 @@ const RestaurantListPage = () => {
                 key={r.branch_id}
                 className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
               >
-                <div className="relative" style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                <div className="relative flex justify-center items-center">
                   <img
                     src={
                       r.branch_image === 'https://feasto.com.my/web/images/logo/default.png'
@@ -115,9 +143,8 @@ const RestaurantListPage = () => {
                         : r.branch_image ?? '/dist/images/logo/default.png'
                     }
                     alt={r.restaurant_name}
-                    // className="w-full h-48 object-cover"
                     className="object-cover"
-                    style={{ width: '10rem'}}
+                    style={{ width: '10rem' }}
                   />
                   <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors">
                     <Heart size={16} className="text-gray-600" />
@@ -149,8 +176,10 @@ const RestaurantListPage = () => {
                       <span>{parseFloat(r.distance).toFixed(1)} km</span>
                     </div>
                   </div>
-
-                  <Button onClick={() => handleMenuButtonClick(r)} className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                  <Button
+                    onClick={() => handleMenuButtonClick(r)}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                  >
                     View Menu
                   </Button>
                 </div>

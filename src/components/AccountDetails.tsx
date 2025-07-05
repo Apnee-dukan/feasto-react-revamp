@@ -3,6 +3,7 @@ import axios from "axios";
 import { Dialog, DialogOverlay, DialogContent } from "@/components/ui/dialog";
 import ResponsiveMap from "./ResponsiveMap";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { Input } from "./ui/input";
 
 export default function AccountDetails() {
   const [tab, setTab] = useState<
@@ -68,12 +69,6 @@ export default function AccountDetails() {
     setShowMapDialog(true);
   }
 
-  function submitOtp() {
-    // Depending on otpDialog, call correct endpoint
-    setOtpDialog(null);
-    setOtpValue("");
-  }
-
   function loadOrderViewDetails(orderID: string) {
     const documenturl = "https://feasto.com.my/web/api/";
     const URL = `${documenturl}customer/customer/loadOrderDetails?order_id=${orderID}`;
@@ -96,11 +91,35 @@ export default function AccountDetails() {
   }
 
   function handleProfileUpdate() {
-    // This would ideally call an API to update profile, but for now:
+    const url =
+      "https://feasto.com.my/web/api/customer/customer/updateCustomerProfileDetails";
     setCustomer((prev: any) => ({
       ...prev,
       ...profileForm,
     }));
+    const uid = localStorage.getItem("userid");
+    const data = {
+      id: uid,
+      ...profileForm,
+    };
+    axios
+      .post(url, data, {
+        headers: {
+          "x-api-key": "Sdrops!23",
+          "Access-Control-Allow-Origin": "*",
+          crossdomain: true,
+          "Content-Type": "application/json;charset=UTF-8",
+        },
+      })
+      .then((res) => {
+        if (res.data.status) {
+          setCustomer((prev: any) => ({
+            ...prev,
+            ...profileForm,
+          }));
+        }
+      })
+      .catch(console.error);
     setShowUpdateProfileDialog(false);
   }
 
@@ -110,8 +129,30 @@ export default function AccountDetails() {
       return;
     }
     setMobileOtpError("");
-    // simulate sending OTP
-    setShowMobileOTPInput(true);
+    const base = "https://feasto.com.my/web/api/";
+    const URL = `${base}mobile/customer_registration/changeNewMobileOtp`;
+    const uid = localStorage.getItem("userid");
+    const data = {
+      customer_id: uid,
+      mobile: newMobile,
+      mobile_code: newMobileCode,
+    };
+    axios
+      .post(URL, data, {
+        headers: {
+          "x-api-key": "Sdrops!23",
+          "Access-Control-Allow-Origin": "*",
+          crossdomain: true,
+          "Content-Type": "application/json;charset=UTF-8",
+        },
+      })
+      .then((res) => {
+        if (res.data.status) {
+          setShowMobileOTPInput(true);
+          setOtpValue("");
+        }
+      })
+      .catch(console.error);
   };
 
   const sendOTPtoEmail = () => {
@@ -151,6 +192,7 @@ export default function AccountDetails() {
       setMobileOtpError("Invalid OTP");
     }
   };
+
   const verifyEmailOTP = () => {
     if (otpValue === "123456") {
       // dummy OTP check
@@ -163,7 +205,7 @@ export default function AccountDetails() {
     } else {
       setEmailOtpError("Invalid OTP");
     }
-  }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -416,19 +458,24 @@ export default function AccountDetails() {
                 New Mobile Number
               </label>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMobileCode}
+                <select
+                  className="border rounded px-3 py-2"
+                  value={newMobileCode || "60"}
                   onChange={(e) => setNewMobileCode(e.target.value)}
-                  placeholder="Country code"
-                  className="border rounded p-2 w-1/3"
-                />
-                <input
-                  type="text"
+                >
+                  <option value="60">🇲🇾 +60 (Malaysia)</option>
+                  <option value="91">🇮🇳 +91 (India)</option>
+                  <option value="1">🇺🇸 +1 (USA)</option>
+                  <option value="44">🇬🇧 +44 (UK)</option>
+                  <option value="61">🇦🇺 +61 (Australia)</option>
+                </select>
+                <Input
+                  id="signup-phone"
+                  type="tel"
+                  placeholder="Enter phone number"
                   value={newMobile}
                   onChange={(e) => setNewMobile(e.target.value)}
-                  placeholder="Number"
-                  className="border rounded p-2 w-2/3"
+                  required
                 />
               </div>
             </>
@@ -492,9 +539,7 @@ export default function AccountDetails() {
         }}
       >
         <DialogContent className="w-full max-w-md mx-auto mt-20 bg-white p-6 rounded-lg shadow-lg space-y-4">
-          <h2 className="text-xl font-semibold">
-            {showMobileOTPInput ? "Enter OTP" : "Update Mobile Number"}
-          </h2>
+          <h2 className="text-xl font-semibold">Update Your Email</h2>
 
           {!showMobileOTPInput ? (
             <>
@@ -502,12 +547,12 @@ export default function AccountDetails() {
                 Enter New Email
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="Email"
-                  className="border rounded p-2 w-2/3"
+                  className="border rounded p-2 w-full"
                 />
               </div>
             </>
@@ -519,7 +564,9 @@ export default function AccountDetails() {
               <input
                 type="text"
                 value={emailOtpValue}
-                onChange={(e) => setEmailOtpValue(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) =>
+                  setEmailOtpValue(e.target.value.replace(/\D/g, ""))
+                }
                 placeholder="Enter OTP"
                 className="border rounded p-2 w-full tracking-widest text-center text-lg"
               />
