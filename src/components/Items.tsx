@@ -148,14 +148,17 @@ const Items: React.FC = () => {
                   <img
                     src={item.item_img || '/dist/images/logo/feasto-orange-1.png'}
                     alt={item.name}
-                    className="w-[10rem] h-40 object-cover"
+                    className="w-[10rem] h-40 object-cover mt-3"
                   />
                 </div>
                 <div className="p-3 flex flex-row justify-between items-start">
-                  <h3 className="font-semibold text-lg truncate">{item.name}</h3>
                   <div className="flex items-center justify-between mt-2">
-                    {item.item_type_name === "Non-Veg" ? (<img src='/dist/images/logo/non-veg.png' alt="Non-Veg" className="w-4 h-4" />) : (<img src='/dist/images/logo/veg.png' alt="Veg" className="w-4 h-4" />)}
+                  {item.item_type_name === "Non-Veg" ? (<img src='/dist/images/logo/non-veg.png' alt="Non-Veg" className="w-4 h-4" />) : (<img src='/dist/images/logo/veg.png' alt="Veg" className="w-4 h-4" />)}
+                  <h3 className="font-semibold text-lg truncate ml-1">{item.name}</h3>
                   </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p>₹ {item.price}</p>
+                 </div>
                 </div>
               </div>
             </div>
