@@ -35,6 +35,10 @@ export default function AccountDetails() {
   const [emailOtpValue, setEmailOtpValue] = useState("");
   const [emailOtpError, setEmailOtpError] = useState("");
   const [showEmailOTPInput, setShowEmailOTPInput] = useState(false);
+  const [changePasswordDialog, setChangePasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     const uid = localStorage.getItem("userid");
@@ -58,6 +62,41 @@ export default function AccountDetails() {
           setAddresses(d.userAddressDetails.Data);
       });
   }, []);
+
+  const handleChangePassword = () => {
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    setPasswordError("");
+    const url =
+      "https://feasto.com.my/web/api/customer/customer/saveChangeUserPassword";
+    const uid = localStorage.getItem("userid");
+    const data = {
+      id: uid,
+      password: newPassword,
+    };
+    axios
+      .post(url, data, {
+        headers: {
+          "x-api-key": "Sdrops!23",
+          "Access-Control-Allow-Origin": "*",
+          crossdomain: true,
+          "Content-Type": "application/json;charset=UTF-8",
+        },
+      })
+      .then((res) => {
+        if (res.data.status) {
+          localStorage.clear();
+          window.location.href = "/";
+        }
+      })
+      .catch(console.error);
+  }
 
   function logout() {
     localStorage.clear();
@@ -408,7 +447,7 @@ export default function AccountDetails() {
             </button>
             <button
               onClick={() => {
-                /* TODO: change password */
+                setChangePasswordDialog(true);
               }}
               className="bg-red-500 text-white px-4 py-2 rounded ml-2"
             >
@@ -522,6 +561,119 @@ export default function AccountDetails() {
                 setNewMobile("");
                 setNewMobileCode("");
                 setOtpValue("");
+              }}
+              className="px-4 py-2 bg-gray-400 text-white rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      {/* <Dialog
+        open={changePasswordDialog}
+        onOpenChange={() => setChangePasswordDialog(false)}
+      >
+        <DialogContent className="w-full max-w-md mx-auto mt-20 bg-white p-6 rounded-lg shadow-lg space-y-4">
+          <h2 className="text-xl font-semibold">Change Your Password</h2>
+
+          <label className="block text-sm font-medium text-gray-700">
+            New Password
+          </label>
+          <Input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New Password"
+            className="border rounded p-2 w-full"
+          />
+
+          <label className="block text-sm font-medium text-gray-700">
+            Confirm Password
+          </label>
+          <Input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm Password"
+            className="border rounded p-2 w-full"
+          />
+
+          {passwordError && (
+            <p className="text-red-600 text-sm">{passwordError}</p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={handleChangePassword}
+              className="px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              Change Password
+            </button>
+            <button
+              onClick={() => {
+                setChangePasswordDialog(false);
+                setNewPassword("");
+                setConfirmPassword("");
+                setPasswordError("");
+              }}
+              className="px-4 py-2 bg-gray-400 text-white rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog> */}
+
+      <Dialog
+        open={changePasswordDialog}
+        onOpenChange={() => {
+          setChangePasswordDialog(false);
+        }}
+      >
+        <DialogContent className="w-full max-w-md mx-auto mt-20 bg-white p-6 rounded-lg shadow-lg space-y-4">
+          <h2 className="text-xl font-semibold">Change Your Password</h2>
+
+          <label className="block text-sm font-medium text-gray-700">
+            New Password
+          </label>
+          <Input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New Password"
+            className="border rounded p-2 w-full"
+          />
+
+          <label className="block text-sm font-medium text-gray-700">
+            Confirm Password
+          </label>
+          <Input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm Password"
+            className="border rounded p-2 w-full"
+          />
+
+          {passwordError && (
+            <p className="text-red-600 text-sm">{passwordError}</p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={handleChangePassword}
+              className="px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              Change Password
+            </button>
+            <button
+              onClick={() => {
+                setChangePasswordDialog(false);
+                setNewPassword("");
+                setConfirmPassword("");
+                setPasswordError("");
               }}
               className="px-4 py-2 bg-gray-400 text-white rounded"
             >

@@ -100,7 +100,41 @@ const Cart: React.FC = () => {
   };
 
   const placeOrder = async () => {
+    console.log("Placing order with items:", items);
     if (!userID || !items.length) return;
+
+    /*
+
+
+order_type:0
+total_quantity:1
+total_amount:20.00
+tax_id:1
+total_tax_amount:1.20
+net_amount:21.20
+payable_amount:21.00
+table_id:1
+no_of_people:1
+user_id:6
+branch_id:5
+service_type:1
+items_details[0][item_qty]:1
+items_details[0][item_price]:20
+items_details[0][is_parcel]:0
+items_details[0][parcel_amount]:0
+items_details[0][parcel_price]:0
+items_details[0][item_amount]:20
+items_details[0][extra_amount]:0
+items_details[0][total_amount]:20
+items_details[0][item_id]:9
+items_details[0][item_name]:'Pizza'
+items_details[0][comments]:
+items_details[0][ingredients]:
+items_details[0][toppings]:0
+items_details[0][sub_toppings]:0
+items_details[0][variants]:8
+
+     */
 
     const payload = {
       customer_id: userID,
@@ -109,12 +143,13 @@ const Cart: React.FC = () => {
       total_amount: cartData.subTotal,
       net_amount: cartData.grandTotal,
       payable_amount: cartData.grandTotal,
+      service_type: 3,
       no_of_items: items.length,
       delivery_details: JSON.stringify(
         selectedAddress >= 0 ? addresses[selectedAddress] : location
       ),
     };
-
+    console.log("Placing order with payload:", payload);
     try {
       const documenturl = "https://feasto.com.my/web/api/";
       const res = await axios.post(
@@ -154,11 +189,11 @@ const Cart: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => changeQty(idx, -1)}>
-                    <Minus className="w-5 h-5 text-gray-600" />
+                    <Minus className="w-5 h-5 text-red-600" />
                   </button>
                   <span>{it.qty}</span>
                   <button onClick={() => changeQty(idx, +1)}>
-                    <Plus className="w-5 h-5 text-gray-600" />
+                    <Plus className="w-5 h-5 text-green-600" />
                   </button>
                 </div>
               </div>
@@ -186,10 +221,10 @@ const Cart: React.FC = () => {
               <span>{currency} {cartData.grandTotal}</span>
             </div>
             <div className="mt-4 flex gap-2">
-              <Button onClick={placeOrder} disabled={!items.length} className="flex-1">
+              <Button onClick={() => placeOrder()} disabled={!items.length} className="flex-1">
                 Place Order
               </Button>
-              <Button variant="outline" onClick={clearCart} className="flex-1">
+              <Button variant="outline" onClick={() => clearCart()} className="flex-1">
                 Clear
               </Button>
             </div>
