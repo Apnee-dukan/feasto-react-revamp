@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import OtpModal from "./OtpModal";
-import toast from "react-hot-toast";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -93,7 +92,6 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         .get(URL, API_HEADER)
         .then((res) => {
           if (res.data.status) {
-            toast.success("OTP Verified Successfully!");
             setOtpModalOpen(false);
           }
         })
