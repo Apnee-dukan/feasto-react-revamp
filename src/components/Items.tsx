@@ -4,7 +4,6 @@ import queryString from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 
-
 const Items: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,6 +16,11 @@ const Items: React.FC = () => {
   const [branchDetails, setBranchDetails] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deliveryType, setDeliveryType] = useState('1');
+
+  // Dialog states
+  const [showDialog, setShowDialog] = useState(false);
+  const [dropdownValue, setDropdownValue] = useState('1');
 
   const API_HEADER = {
     headers: {
@@ -27,14 +31,23 @@ const Items: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch restaurant details
+    const params = queryString.parse(location.search);
+    if (params.deliveryT) {
+      setShowDialog(true);
+    }
+
+    const savedDeliveryType = localStorage.getItem('deliveryType');
+    if (savedDeliveryType) setDeliveryType(savedDeliveryType);
+
+    const savedDropdownValue = localStorage.getItem('dropdownValue');
+    if (savedDropdownValue) setDropdownValue(savedDropdownValue);
+
     axios
       .get(`https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`, API_HEADER)
       .then(res => {
         if (res.data.status) setRestaurant(res.data.Data[0]);
       });
 
-    // Fetch category list and items
     axios
       .get(`https://feasto.com.my/web/api/pos/touch_order/loadPOSData?branch_id=${branch}`, API_HEADER)
       .then(res => {
@@ -45,21 +58,17 @@ const Items: React.FC = () => {
         }
       });
 
-    // Get item details (with currency info)
     axios
       .get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}`, API_HEADER)
       .then(res => {
         if (res.data.status) setBranchDetails(res.data.BranchDetails || []);
       });
-  }, [branch]);
+  }, [branch, location.search]);
 
   const filterByCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
     axios
-      .get(
-        `https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`,
-        API_HEADER
-      )
+      .get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`, API_HEADER)
       .then(res => {
         if (res.data.status) {
           setItems(res.data.Data);
@@ -78,7 +87,34 @@ const Items: React.FC = () => {
 
   return (
     <div className="min-h-screen px-4 py-6 bg-gray-50">
-      {/* Header with Restaurant Info */}
+      {/* Dialog */}
+      {showDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">Select Number of People</h2>
+            <select
+              value={dropdownValue}
+              onChange={(e) => {
+                setDropdownValue(e.target.value);
+                localStorage.setItem('dropdownValue', e.target.value);
+              }}
+              className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              {Array.from({ length: 10 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>{i + 1}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowDialog(false)}
+              className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       {restaurant && (
         <div className="text-center mb-6">
           <img
@@ -88,13 +124,46 @@ const Items: React.FC = () => {
           />
           <h2 className="text-xl font-semibold mt-3">{restaurant.restaurant_name}</h2>
           <p className="text-gray-600">{restaurant.cuisine_details}</p>
-          <p className="text-sm text-gray-500">
-            {restaurant.cityName}, {restaurant.stateName}
-          </p>
+          <p className="text-sm text-gray-500">{restaurant.cityName}, {restaurant.stateName}</p>
+
+          {/* Delivery Type Radio Buttons */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Choose Delivery Option</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { label: 'Dine In', value: '1' },
+                { label: 'Take Away', value: '2' },
+                { label: 'Delivery', value: '3' },
+              ].map(option => (
+                <label
+                  key={option.value}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all duration-200
+                    ${deliveryType === option.value
+                      ? 'bg-orange-500 text-white border-orange-600'
+                      : 'bg-white text-gray-800 hover:bg-orange-100 border-orange-300'
+                    }`}
+                >
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value={option.value}
+                    checked={deliveryType === option.value}
+                    disabled={option.value === '3'}
+                    onChange={() => {
+                      setDeliveryType(option.value);
+                      localStorage.setItem('deliveryType', option.value);
+                    }}
+                    className="form-radio text-orange-500 focus:ring-orange-500"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Search Box */}
+      {/* Search */}
       <div className="max-w-md mx-auto mb-6">
         <input
           type="text"
@@ -110,9 +179,7 @@ const Items: React.FC = () => {
         {categories.map((cat: any) => (
           <button
             key={cat.id}
-            className={`px-3 py-1 rounded-full text-sm font-medium border ${
-              selectedCategory === cat.id ? 'bg-green-600 text-white' : 'bg-white text-gray-700'
-            }`}
+            className={`px-3 py-1 rounded-full text-sm font-medium border ${selectedCategory === cat.id ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
             onClick={() => filterByCategory(cat.id)}
           >
             {cat.name}
@@ -130,7 +197,7 @@ const Items: React.FC = () => {
         </button>
       </div>
 
-      {/* Items Grid */}
+      {/* Items */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {filteredItems.length > 0 ? (
           filteredItems.map((item: any) => (
@@ -153,35 +220,34 @@ const Items: React.FC = () => {
                 </div>
                 <div className="p-3 flex flex-row justify-between items-start">
                   <div className="flex items-center justify-between mt-2">
-                  {item.item_type_name === "Non-Veg" ? (<img src='/dist/images/logo/non-veg.png' alt="Non-Veg" className="w-4 h-4" />) : (<img src='/dist/images/logo/veg.png' alt="Veg" className="w-4 h-4" />)}
-                  <h3 className="font-semibold text-lg truncate ml-1">{item.name}</h3>
+                    {item.item_type_name === "Non-Veg" ? (
+                      <img src='/dist/images/logo/non-veg.png' alt="Non-Veg" className="w-4 h-4" />
+                    ) : (
+                      <img src='/dist/images/logo/veg.png' alt="Veg" className="w-4 h-4" />
+                    )}
+                    <h3 className="font-semibold text-lg truncate ml-1">{item.name}</h3>
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <p>₹ {item.price}</p>
-                 </div>
+                  </div>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="text-center col-span-full py-10 text-gray-500">
-            <img
-              src="/dist/images/notfound.png"
-              alt="Not Found"
-              className="mx-auto mb-4 w-40"
-            />
+            <img src="/dist/images/notfound.png" alt="Not Found" className="mx-auto mb-4 w-40" />
             <p>No items found</p>
           </div>
         )}
       </div>
 
-      {/* Cart Floating Button */}
+      {/* Cart Button */}
       <button
         onClick={() => navigate('/cart')}
         style={{ backgroundColor: 'rgb(255 113 0)' }}
         className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition"
       >
-        {/* 🛒 */}
         <ShoppingCart />
       </button>
     </div>

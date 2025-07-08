@@ -103,37 +103,34 @@ const Cart: React.FC = () => {
     console.log("Placing order with items:", items);
     if (!userID || !items.length) return;
 
-    /*
-
-
-order_type:0
-total_quantity:1
-total_amount:20.00
-tax_id:1
-total_tax_amount:1.20
-net_amount:21.20
-payable_amount:21.00
-table_id:1
-no_of_people:1
-user_id:6
-branch_id:5
-service_type:1
-items_details[0][item_qty]:1
-items_details[0][item_price]:20
-items_details[0][is_parcel]:0
-items_details[0][parcel_amount]:0
-items_details[0][parcel_price]:0
-items_details[0][item_amount]:20
-items_details[0][extra_amount]:0
-items_details[0][total_amount]:20
-items_details[0][item_id]:9
-items_details[0][item_name]:'Pizza'
-items_details[0][comments]:
-items_details[0][ingredients]:
-items_details[0][toppings]:0
-items_details[0][sub_toppings]:0
-items_details[0][variants]:8
-
+/*
+  order_type:0
+  total_quantity:1
+  total_amount:20.00
+  tax_id:1
+  total_tax_amount:1.20
+  net_amount:21.20
+  payable_amount:21.00
+  table_id:1
+  no_of_people:1
+  user_id:6
+  branch_id:5
+  service_type:1
+  items_details[0][item_qty]:1
+  items_details[0][item_price]:20
+  items_details[0][is_parcel]:0
+  items_details[0][parcel_amount]:0
+  items_details[0][parcel_price]:0
+  items_details[0][item_amount]:20
+  items_details[0][extra_amount]:0
+  items_details[0][total_amount]:20
+  items_details[0][item_id]:9
+  items_details[0][item_name]:'Pizza'
+  items_details[0][comments]:
+  items_details[0][ingredients]:
+  items_details[0][toppings]:0
+  items_details[0][sub_toppings]:0
+  items_details[0][variants]:8
      */
 
     const payload = {
@@ -229,7 +226,7 @@ items_details[0][variants]:8
               </Button>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          {/* <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="font-semibold mb-2">Select Delivery Address</h2>
             <div className="space-y-4">
               {addresses.map((addr, idx) => (
@@ -245,7 +242,7 @@ items_details[0][variants]:8
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
