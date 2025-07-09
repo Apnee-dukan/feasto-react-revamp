@@ -19,8 +19,8 @@ const Items: React.FC = () => {
   const [deliveryType, setDeliveryType] = useState("1");
   const [showQR, setShowQR] = useState(false);
   const [tableData, setTableData] = useState<any>({});
+  const [cart, setCart] = useState<Record<string, { item: any; qty: number }>>({});
 
-  // Dialog states
   const [showDialog, setShowDialog] = useState(false);
   const [dropdownValue, setDropdownValue] = useState("1");
 
@@ -43,23 +43,13 @@ const Items: React.FC = () => {
     if (params.table_id) {
       localStorage.setItem("table_id", params.table_id as string);
       setDeliveryType("1");
-      // sales_date:2020-06-30
-      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
-        params.branch
-      }&table_id=${params.table_id}&sales_date=${
-        new Date().toISOString().split("T")[0]
-      }`;
-      axios
-        .get(url, API_HEADER)
-        .then((res) => {
-          if (res.status) {
-            setTableData(res.data.Data);
-            setShowDialog(true);
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching table details:", err);
-        });
+      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${params.branch}&table_id=${params.table_id}&sales_date=${new Date().toISOString().split("T")[0]}`;
+      axios.get(url, API_HEADER).then((res) => {
+        if (res.status) {
+          setTableData(res.data.Data);
+          setShowDialog(true);
+        }
+      }).catch((err) => console.error("Error fetching table details:", err));
     }
 
     const savedDeliveryType = localStorage.getItem("deliveryType");
@@ -68,34 +58,22 @@ const Items: React.FC = () => {
     const savedDropdownValue = localStorage.getItem("dropdownValue");
     if (savedDropdownValue) setDropdownValue(savedDropdownValue);
 
-    axios
-      .get(
-        `https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`,
-        API_HEADER
-      )
+    axios.get(`https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`, API_HEADER)
       .then((res) => {
         if (res.data.status) setRestaurant(res.data.Data[0]);
       });
 
-    axios
-      .get(
-        `https://feasto.com.my/web/api/pos/touch_order/loadPOSData?branch_id=${branch}`,
-        API_HEADER
-      )
+    axios.get(`https://feasto.com.my/web/api/pos/touch_order/loadPOSData?branch_id=${branch}`, API_HEADER)
       .then((res) => {
-        if (res.data.categories?.status)
-          setCategories(res.data.categories.Data);
+        if (res.data.categories?.status) setCategories(res.data.categories.Data);
         if (res.data.items?.status) {
-          setItems(res.data.items.Data);
-          setFilteredItems(res.data.items.Data);
+          const validItems = res.data.items.Data.filter((item: any) => parseFloat(item.price) > 0);
+          setItems(validItems);
+          setFilteredItems(validItems);
         }
       });
 
-    axios
-      .get(
-        `https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}`,
-        API_HEADER
-      )
+    axios.get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}`, API_HEADER)
       .then((res) => {
         if (res.data.status) setBranchDetails(res.data.BranchDetails || []);
       });
@@ -103,15 +81,12 @@ const Items: React.FC = () => {
 
   const filterByCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    axios
-      .get(
-        `https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`,
-        API_HEADER
-      )
+    axios.get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`, API_HEADER)
       .then((res) => {
         if (res.data.status) {
-          setItems(res.data.Data);
-          setFilteredItems(res.data.Data);
+          const validItems = res.data.Data.filter((item: any) => parseFloat(item.price) > 0);
+          setItems(validItems);
+          setFilteredItems(validItems);
           setSearchQuery("");
         }
       });
@@ -126,17 +101,36 @@ const Items: React.FC = () => {
     setFilteredItems(filtered);
   };
 
-  const tableId = localStorage.getItem("table_id");
-
-  const handleScan = (data: string | null) => {
-    if (data) {
-      setShowQR(false);
-      window.location.href = data;
-    }
+  const handleAddToCart = (item: any) => {
+    setCart((prev) => ({ ...prev, [item.id]: { item, qty: 1 } }));
+    console.log(cart);
   };
 
-  const handleError = (err: any) => {
-    console.error(err);
+  const increment = (itemId: string) => {
+    setCart((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        qty: prev[itemId].qty + 1,
+      },
+    }));
+  console.log(cart);
+  };
+
+  const decrement = (itemId: string) => {
+    setCart((prev) => {
+      const existing = prev[itemId];
+      if (existing.qty > 1) {
+        return {
+          ...prev,
+          [itemId]: { ...existing, qty: existing.qty - 1 },
+        };
+      } else {
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
+      }
+    });
   };
 
   return (
@@ -199,11 +193,11 @@ const Items: React.FC = () => {
           <p className="text-gray-600">{restaurant.cuisine_details}</p>
           <p className="text-sm text-gray-500">
             {restaurant.cityName}, {restaurant.stateName}
-            {tableId && (
+            {/* {tableId && (
               <span className="block mt-1 text-orange-600 font-medium">
                 Table ID: {tableId}
               </span>
-            )}
+            )} */}
           </p>
 
           {/* Delivery Type Radio Buttons */}
@@ -306,56 +300,63 @@ const Items: React.FC = () => {
 
       {/* Items */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {filteredItems.filter((item: any) => parseFloat(item.price) > 0)
-          .length > 0 ? (
-          filteredItems
-            .filter((item: any) => parseFloat(item.price) > 0)
-            .map((item: any) => (
-              <div
-                key={item.id}
-                className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition"
-              >
-                <div
-                  onClick={() => {
-                    window.location.href = `/itemdetails?branch=${branch}&item_id=${item.id}`;
-                  }}
-                  className="cursor-pointer"
-                >
-                  <div className="flex justify-center items-center">
+        {filteredItems.filter((item: any) => parseFloat(item.price) > 0).length > 0 ? (
+          filteredItems.filter((item: any) => parseFloat(item.price) > 0).map((item: any) => (
+            <div
+              key={item.id}
+              className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition"
+            >
+              <div className="cursor-pointer">
+                <div className="flex justify-center items-center">
+                  <img
+                    src={item.item_img || "/dist/images/logo/feasto-orange-1.png"}
+                    alt={item.name}
+                    className="w-[10rem] h-40 object-cover mt-3"
+                  />
+                </div>
+                <div className="p-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
                     <img
                       src={
-                        item.item_img || "/dist/images/logo/feasto-orange-1.png"
+                        item.item_type_name === "Non-Veg"
+                          ? "/dist/images/logo/non-veg.png"
+                          : "/dist/images/logo/veg.png"
                       }
-                      alt={item.name}
-                      className="w-[10rem] h-40 object-cover mt-3"
+                      alt={item.item_type_name}
+                      className="w-4 h-4"
                     />
+                    <h3 className="font-semibold text-lg truncate">{item.name}</h3>
                   </div>
-                  <div className="p-3 flex flex-row justify-between items-start">
-                    <div className="flex items-center justify-between mt-2">
-                      {item.item_type_name === "Non-Veg" ? (
-                        <img
-                          src="/dist/images/logo/non-veg.png"
-                          alt="Non-Veg"
-                          className="w-4 h-4"
-                        />
-                      ) : (
-                        <img
-                          src="/dist/images/logo/veg.png"
-                          alt="Veg"
-                          className="w-4 h-4"
-                        />
-                      )}
-                      <h3 className="font-semibold text-lg truncate ml-1">
-                        {item.name}
-                      </h3>
+                  <p>₹ {item.price}</p>
+
+                  {!cart[item.id] ? (
+                    <button
+                      onClick={() => handleAddToCart(item)}
+                      className="mt-2 bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600"
+                    >
+                      Add
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => decrement(item.id)}
+                        className="px-2 py-1 bg-gray-300 rounded"
+                      >
+                        -
+                      </button>
+                      <span>{cart[item.id].qty}</span>
+                      <button
+                        onClick={() => increment(item.id)}
+                        className="px-2 py-1 bg-gray-300 rounded"
+                      >
+                        +
+                      </button>
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <p>₹ {item.price}</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            ))
+            </div>
+          ))
         ) : (
           <div className="text-center col-span-full py-10 text-gray-500">
             <img
@@ -368,7 +369,6 @@ const Items: React.FC = () => {
         )}
       </div>
 
-      {/* Cart Button */}
       <button
         onClick={() => navigate("/cart")}
         style={{ backgroundColor: "rgb(255 113 0)" }}
