@@ -94,6 +94,9 @@ const Cart: React.FC = () => {
     localStorage.setItem('cartDetailsData', JSON.stringify({cartItemLists: [], subTotal: "0.00", grandTotal: "0.00"}));
     localStorage.removeItem('branch_id');
     localStorage.removeItem('no_of_cart_items');
+    localStorage.removeItem('dropdownValue');
+    localStorage.removeItem('deliveryType');
+    localStorage.removeItem('table_id');
     setItems([]);
     setCartData({});
     setStore(null);
@@ -104,6 +107,7 @@ const Cart: React.FC = () => {
     const serviceType = localStorage.getItem('deliveryType') || '1';
     const tableId = localStorage.getItem('table_id') || '';
     const branchId = localStorage.getItem('branch_id') || '';
+    const numberOfPeoples = localStorage.getItem('no_of_people') || 0;
     const itemListUpdated = items.map(it => ({
       item_id: it.itemDetail?.id,
       item_name: it.itemDetail?.name,
@@ -131,6 +135,7 @@ const Cart: React.FC = () => {
       payable_amount: cartData.grandTotal,
       service_type: serviceType,
       no_of_items: items.length,
+      no_of_people: numberOfPeoples,
       delivery_details: JSON.stringify(
         selectedAddress >= 0 ? addresses[selectedAddress] : location
       ),
@@ -212,7 +217,7 @@ const Cart: React.FC = () => {
               <Button onClick={() => placeOrder()} disabled={!items.length} className="flex-1">
                 Place Order
               </Button>
-              <Button variant="outline" onClick={() => clearCart()} className="flex-1">
+              <Button variant="outline" onClick={() => clearCart()} disabled={!items.length} className="flex-1">
                 Clear
               </Button>
             </div>

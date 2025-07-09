@@ -29,8 +29,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose }) => {
         }
       },
       (err) => {
-        // Optionally log scan errors
-        // console.log("Scan error:", err);
+        console.error("Scan error:", err);
       }
     ).then(() => {
       setIsRunning(true);
