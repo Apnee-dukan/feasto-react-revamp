@@ -3,12 +3,12 @@ import axios from 'axios';
 import queryString from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
+import QRScanner from './QRScanner';
 
 const Items: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { branch = '' } = queryString.parse(location.search);
-
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -17,6 +17,7 @@ const Items: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [deliveryType, setDeliveryType] = useState('1');
+  const [showQR, setShowQR] = useState(false);
 
   // Dialog states
   const [showDialog, setShowDialog] = useState(false);
@@ -31,8 +32,16 @@ const Items: React.FC = () => {
   };
 
   useEffect(() => {
+    localStorage.setItem('deliveryType', '1');
+    localStorage.setItem('dropdownValue', '1');
+  }, []);
+
+  useEffect(() => {
     const params = queryString.parse(location.search);
-    if (params.deliveryT) {
+    localStorage.setItem('branch_id', params.branch as string);
+    if (params.table_id) {
+      localStorage.setItem('table_id', params.table_id as string);
+      setDeliveryType('1');
       setShowDialog(true);
     }
 
@@ -85,6 +94,19 @@ const Items: React.FC = () => {
     setFilteredItems(filtered);
   };
 
+  const tableId = localStorage.getItem('table_id');
+
+  const handleScan = (data: string | null) => {
+    if (data) {
+      setShowQR(false);
+      window.location.href = data;
+    }
+  };
+
+  const handleError = (err: any) => {
+    console.error(err);
+  };
+
   return (
     <div className="min-h-screen px-4 py-6 bg-gray-50">
       {/* Dialog */}
@@ -124,7 +146,14 @@ const Items: React.FC = () => {
           />
           <h2 className="text-xl font-semibold mt-3">{restaurant.restaurant_name}</h2>
           <p className="text-gray-600">{restaurant.cuisine_details}</p>
-          <p className="text-sm text-gray-500">{restaurant.cityName}, {restaurant.stateName}</p>
+          <p className="text-sm text-gray-500">
+            {restaurant.cityName}, {restaurant.stateName}
+            {tableId && (
+              <span className="block mt-1 text-orange-600 font-medium">
+                Table ID: {tableId}
+              </span>
+            )}
+          </p>
 
           {/* Delivery Type Radio Buttons */}
           <div className="mt-6">
@@ -162,6 +191,27 @@ const Items: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* QR Code Scanner (Mobile only view) */}
+      <div className="max-w-md mx-auto mb-4 sm:hidden text-center">
+  {!showQR ? (
+    <button
+      className="text-sm bg-green-600 text-white px-4 py-2 rounded-full shadow hover:bg-green-700 transition"
+      onClick={() => setShowQR(true)}
+    >
+      📷 Scan QR Code
+    </button>
+  ) : (
+    <QRScanner
+      onScan={(url) => {
+        setShowQR(false);
+        window.location.href = url;
+        // console.log(url);
+      }}
+      onClose={() => setShowQR(false)}
+    />
+  )}
+</div>
 
       {/* Search */}
       <div className="max-w-md mx-auto mb-6">

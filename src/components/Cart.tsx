@@ -91,62 +91,50 @@ const Cart: React.FC = () => {
   };
 
   const clearCart = () => {
-    localStorage.removeItem('cartDetailsData');
+    localStorage.setItem('cartDetailsData', JSON.stringify({cartItemLists: [], subTotal: "0.00", grandTotal: "0.00"}));
     localStorage.removeItem('branch_id');
     localStorage.removeItem('no_of_cart_items');
-    updateCart([]);
+    setItems([]);
     setCartData({});
     setStore(null);
   };
 
   const placeOrder = async () => {
-    console.log("Placing order with items:", items);
-    if (!userID || !items.length) return;
-
-/*
-  order_type:0
-  total_quantity:1
-  total_amount:20.00
-  tax_id:1
-  total_tax_amount:1.20
-  net_amount:21.20
-  payable_amount:21.00
-  table_id:1
-  no_of_people:1
-  user_id:6
-  branch_id:5
-  service_type:1
-  items_details[0][item_qty]:1
-  items_details[0][item_price]:20
-  items_details[0][is_parcel]:0
-  items_details[0][parcel_amount]:0
-  items_details[0][parcel_price]:0
-  items_details[0][item_amount]:20
-  items_details[0][extra_amount]:0
-  items_details[0][total_amount]:20
-  items_details[0][item_id]:9
-  items_details[0][item_name]:'Pizza'
-  items_details[0][comments]:
-  items_details[0][ingredients]:
-  items_details[0][toppings]:0
-  items_details[0][sub_toppings]:0
-  items_details[0][variants]:8
-     */
-
+    if (!items.length) return;
+    const serviceType = localStorage.getItem('deliveryType') || '1';
+    const tableId = localStorage.getItem('table_id') || '';
+    const branchId = localStorage.getItem('branch_id') || '';
+    const itemListUpdated = items.map(it => ({
+      item_id: it.itemDetail?.id,
+      item_name: it.itemDetail?.name,
+      item_qty: it.qty,
+      item_price: parseFloat(it.itemDetail?.price ?? 0),
+      is_parcel: it.is_parcel ? 1 : 0,
+      parcel_amount: parseFloat(it.parcel_amount ?? 0),
+      parcel_price: parseFloat(it.price ?? 0),
+      item_amount: parseFloat(it.totalPrice ?? 0),
+      extra_amount: parseFloat(it.extra_amount ?? 0),
+      total_amount: parseFloat(it.totalPrice ?? 0),
+      comments: '',
+      ingredients: '',
+      toppings: 0,
+      sub_toppings: 0,
+      variants: 0,
+    }));
     const payload = {
       customer_id: userID,
-      branch_id: cartData.branch_id,
-      items_details: items,
+      branch_id: branchId,
+      table_id: tableId,
+      items_details: itemListUpdated,
       total_amount: cartData.subTotal,
       net_amount: cartData.grandTotal,
       payable_amount: cartData.grandTotal,
-      service_type: 3,
+      service_type: serviceType,
       no_of_items: items.length,
       delivery_details: JSON.stringify(
         selectedAddress >= 0 ? addresses[selectedAddress] : location
       ),
     };
-    console.log("Placing order with payload:", payload);
     try {
       const documenturl = "https://feasto.com.my/web/api/";
       const res = await axios.post(
@@ -161,7 +149,10 @@ const Cart: React.FC = () => {
           },
         }
       );
-      if (res.data.status) clearCart();
+      if (res.data){
+        window.location.href = "/restaurants";
+        clearCart();
+      }
     } catch (err) {
       console.error(err);
     }
