@@ -19,8 +19,18 @@ const Items: React.FC = () => {
   const [deliveryType, setDeliveryType] = useState("1");
   const [showQR, setShowQR] = useState(false);
   const [tableData, setTableData] = useState<any>({});
-  const [cart, setCart] = useState<Record<string, { item: any; qty: number }>>({});
-
+  const [cart, setCart] = useState<any>(() => {
+    const stored = localStorage.getItem("cartDetailsData");
+    return stored
+      ? JSON.parse(stored)
+      : {
+          cartItemLists: [],
+          subTotal: 0,
+          taxDetails: [],
+          totalTaxAmount: 0,
+          grandTotal: 0,
+        };
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [dropdownValue, setDropdownValue] = useState("1");
 
@@ -43,13 +53,20 @@ const Items: React.FC = () => {
     if (params.table_id) {
       localStorage.setItem("table_id", params.table_id as string);
       setDeliveryType("1");
-      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${params.branch}&table_id=${params.table_id}&sales_date=${new Date().toISOString().split("T")[0]}`;
-      axios.get(url, API_HEADER).then((res) => {
-        if (res.status) {
-          setTableData(res.data.Data);
-          setShowDialog(true);
-        }
-      }).catch((err) => console.error("Error fetching table details:", err));
+      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
+        params.branch
+      }&table_id=${params.table_id}&sales_date=${
+        new Date().toISOString().split("T")[0]
+      }`;
+      axios
+        .get(url, API_HEADER)
+        .then((res) => {
+          if (res.status) {
+            setTableData(res.data.Data);
+            setShowDialog(true);
+          }
+        })
+        .catch((err) => console.error("Error fetching table details:", err));
     }
 
     const savedDeliveryType = localStorage.getItem("deliveryType");
@@ -58,22 +75,37 @@ const Items: React.FC = () => {
     const savedDropdownValue = localStorage.getItem("dropdownValue");
     if (savedDropdownValue) setDropdownValue(savedDropdownValue);
 
-    axios.get(`https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`, API_HEADER)
+    axios
+      .get(
+        `https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`,
+        API_HEADER
+      )
       .then((res) => {
         if (res.data.status) setRestaurant(res.data.Data[0]);
       });
 
-    axios.get(`https://feasto.com.my/web/api/pos/touch_order/loadPOSData?branch_id=${branch}`, API_HEADER)
+    axios
+      .get(
+        `https://feasto.com.my/web/api/pos/touch_order/loadPOSData?branch_id=${branch}`,
+        API_HEADER
+      )
       .then((res) => {
-        if (res.data.categories?.status) setCategories(res.data.categories.Data);
+        if (res.data.categories?.status)
+          setCategories(res.data.categories.Data);
         if (res.data.items?.status) {
-          const validItems = res.data.items.Data.filter((item: any) => parseFloat(item.price) > 0);
+          const validItems = res.data.items.Data.filter(
+            (item: any) => parseFloat(item.price) > 0
+          );
           setItems(validItems);
           setFilteredItems(validItems);
         }
       });
 
-    axios.get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}`, API_HEADER)
+    axios
+      .get(
+        `https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}`,
+        API_HEADER
+      )
       .then((res) => {
         if (res.data.status) setBranchDetails(res.data.BranchDetails || []);
       });
@@ -81,10 +113,16 @@ const Items: React.FC = () => {
 
   const filterByCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    axios.get(`https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`, API_HEADER)
+    axios
+      .get(
+        `https://feasto.com.my/web/api/pos/touch_order/AllItemsListsData?branch_id=${branch}&category_id=${categoryId}`,
+        API_HEADER
+      )
       .then((res) => {
         if (res.data.status) {
-          const validItems = res.data.Data.filter((item: any) => parseFloat(item.price) > 0);
+          const validItems = res.data.Data.filter(
+            (item: any) => parseFloat(item.price) > 0
+          );
           setItems(validItems);
           setFilteredItems(validItems);
           setSearchQuery("");
@@ -101,36 +139,70 @@ const Items: React.FC = () => {
     setFilteredItems(filtered);
   };
 
-  const handleAddToCart = (item: any) => {
-    setCart((prev) => ({ ...prev, [item.id]: { item, qty: 1 } }));
-    console.log(cart);
-  };
-
-  const increment = (itemId: string) => {
-    setCart((prev) => ({
-      ...prev,
-      [itemId]: {
-        ...prev[itemId],
-        qty: prev[itemId].qty + 1,
-      },
+  const updateCart = (newCartItems: any[]) => {
+    const subTotal = newCartItems.reduce(
+      (acc, cur) => acc + parseFloat(cur.totalPrice),
+      0
+    );
+    const taxDetails = (restaurant?.taxDetails || []).map((t: any) => ({
+      ...t,
+      taxAmount: ((subTotal * parseFloat(t.percentage)) / 100).toFixed(2),
     }));
-  console.log(cart);
+    const totalTaxAmount = taxDetails.reduce(
+      (acc: number, t: any) => acc + parseFloat(t.taxAmount),
+      0
+    );
+    const grandTotal = subTotal + totalTaxAmount;
+
+    const updatedCart = {
+      cartItemLists: newCartItems,
+      subTotal: subTotal.toFixed(2),
+      taxDetails,
+      totalTaxAmount: totalTaxAmount.toFixed(2),
+      grandTotal: grandTotal.toFixed(2),
+    };
+
+    localStorage.setItem("cartDetailsData", JSON.stringify(updatedCart));
+    localStorage.setItem("no_of_cart_items", newCartItems.length.toString());
+    setCart(updatedCart);
   };
 
-  const decrement = (itemId: string) => {
-    setCart((prev) => {
-      const existing = prev[itemId];
-      if (existing.qty > 1) {
-        return {
-          ...prev,
-          [itemId]: { ...existing, qty: existing.qty - 1 },
-        };
-      } else {
-        const updated = { ...prev };
-        delete updated[itemId];
-        return updated;
-      }
-    });
+  const handleAdd = (item: any) => {
+    const cartCopy = [...cart.cartItemLists];
+    const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
+
+    if (existing) {
+      existing.qty += 1;
+      existing.totalPrice = (existing.qty * parseFloat(item.price)).toFixed(2);
+    } else {
+      cartCopy.push({
+        itemDetail: { id: item.id, name: item.name, price: item.price },
+        variant: null,
+        ingredients: [],
+        toppings: [],
+        qty: 1,
+        totalPrice: parseFloat(item.price).toFixed(2),
+      });
+    }
+    updateCart(cartCopy);
+  };
+
+  const handleRemove = (itemId: string) => {
+    let cartCopy = [...cart.cartItemLists];
+    const existing = cartCopy.find((i) => i.itemDetail.id === itemId);
+
+    if (!existing) return;
+
+    if (existing.qty === 1) {
+      cartCopy = cartCopy.filter((i) => i.itemDetail.id !== itemId);
+    } else {
+      existing.qty -= 1;
+      existing.totalPrice = (
+        existing.qty * parseFloat(existing.itemDetail.price)
+      ).toFixed(2);
+    }
+
+    updateCart(cartCopy);
   };
 
   return (
@@ -247,7 +319,10 @@ const Items: React.FC = () => {
             className="text-sm bg-orange-500 text-white px-4 py-2 rounded-full shadow hover:bg-orange-600 transition"
             onClick={() => setShowQR(true)}
           >
-            <span className="flex items-center justify-center"> <Scan className="w-4 h-4 mr-2" /> Scan QR Code</span>
+            <span className="flex items-center justify-center">
+              {" "}
+              <Scan className="w-4 h-4 mr-2" /> Scan QR Code
+            </span>
           </button>
         ) : (
           <QRScanner
@@ -300,73 +375,66 @@ const Items: React.FC = () => {
 
       {/* Items */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {filteredItems.filter((item: any) => parseFloat(item.price) > 0).length > 0 ? (
-          filteredItems.filter((item: any) => parseFloat(item.price) > 0).map((item: any) => (
+        {filteredItems.map((item) => {
+          const cartItem = cart.cartItemLists.find(
+            (c) => c.itemDetail.id === item.id
+          );
+          return (
             <div
               key={item.id}
-              className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition"
+              className="bg-white p-4 rounded-2xl shadow hover:shadow-lg transition-all flex flex-col justify-between"
             >
-              <div className="cursor-pointer">
-                <div className="flex justify-center items-center">
-                  <img
-                    src={item.item_img || "/dist/images/logo/feasto-orange-1.png"}
-                    alt={item.name}
-                    className="w-[10rem] h-40 object-cover mt-3"
-                  />
-                </div>
-                <div className="p-3 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={
-                        item.item_type_name === "Non-Veg"
-                          ? "/dist/images/logo/non-veg.png"
-                          : "/dist/images/logo/veg.png"
-                      }
-                      alt={item.item_type_name}
-                      className="w-4 h-4"
-                    />
-                    <h3 className="font-semibold text-lg truncate">{item.name}</h3>
-                  </div>
-                  <p>₹ {item.price}</p>
+              <div className="relative">
+                <img
+                  src={item.item_img || "/dist/images/logo/feasto-orange-1.png"}
+                  alt={item.name}
+                  className="w-full h-40 object-cover rounded-xl"
+                />
 
-                  {!cart[item.id] ? (
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      className="mt-2 bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600"
-                    >
-                      Add
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => decrement(item.id)}
-                        className="px-2 py-1 bg-gray-300 rounded"
-                      >
-                        -
-                      </button>
-                      <span>{cart[item.id].qty}</span>
-                      <button
-                        onClick={() => increment(item.id)}
-                        className="px-2 py-1 bg-gray-300 rounded"
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
+                {/* Veg/Non-Veg Icon */}
+                <img
+                  src={
+                    item.item_type_name === "Non-Veg"
+                      ? "/dist/images/logo/non-veg.png"
+                      : "/dist/images/logo/veg.png"
+                  }
+                  alt={item.item_type_name}
+                  className="absolute top-2 right-2 w-5 h-5 rounded-full border bg-white p-[2px]"
+                />
+              </div>
+              <div className="mt-3">`
+                <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg truncate">{item.name}</h3>
+                <p className="text-gray-500 mb-2">₹ {item.price}</p>
                 </div>
+                {cartItem ? (
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      className="px-3 py-1 bg-orange-300 rounded text-white"
+                    >
+                      -
+                    </button>
+                    <span>{cartItem.qty}</span>
+                    <button
+                      onClick={() => handleAdd(item)}
+                      className="px-3 py-1 bg-orange-600 rounded text-white"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleAdd(item)}
+                    className="w-full mt-2 bg-orange-500 text-white py-1 rounded hover:bg-orange-600"
+                  >
+                    Add
+                  </button>
+                )}
               </div>
             </div>
-          ))
-        ) : (
-          <div className="text-center col-span-full py-10 text-gray-500">
-            <img
-              src="/dist/images/notfound.png"
-              alt="Not Found"
-              className="mx-auto mb-4 w-40"
-            />
-            <p>No items found</p>
-          </div>
-        )}
+          );
+        })}
       </div>
 
       <button

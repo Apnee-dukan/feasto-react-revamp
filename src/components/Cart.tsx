@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { X, Plus, Minus } from 'lucide-react';
-import { parse } from 'path';
 
 const Cart: React.FC = () => {
   const [cartData, setCartData] = useState<any>({});
@@ -10,7 +9,6 @@ const Cart: React.FC = () => {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [location, setLocation] = useState<any>(null);
   const [selectedAddress, setSelectedAddress] = useState<number>(-1);
-  const [showMap, setShowMap] = useState(false);
   const [userID, setUserID] = useState<string | null>(null);
   const [store, setStore] = useState<any>(null);
   const [currency, setCurrency] = useState('₹');
@@ -35,8 +33,7 @@ const Cart: React.FC = () => {
   }, []);
 
   const fetchAddresses = async (uid: string) => {
-    const documenturl = "https://feasto.com.my/web/api/";
-    const url = `${documenturl}customer/customer/customerAddressDetails?user_id=${uid}`;
+    const url = `https://feasto.com.my/web/api/customer/customer/customerAddressDetails?user_id=${uid}`;
     try {
       const res = await axios.get(url, {
         headers: {
@@ -76,7 +73,6 @@ const Cart: React.FC = () => {
   const changeQty = (idx: number, delta: number) => {
     const newArr = [...items];
     const item = newArr[idx];
-
     const item_price = parseFloat(item.itemDetail?.price ?? 0);
     const extra_amount = parseFloat(item.extra_amount ?? 0);
     const newQty = Math.max(0, item.qty + delta);
@@ -91,7 +87,7 @@ const Cart: React.FC = () => {
   };
 
   const clearCart = () => {
-    localStorage.setItem('cartDetailsData', JSON.stringify({cartItemLists: [], subTotal: "0.00", grandTotal: "0.00"}));
+    localStorage.setItem('cartDetailsData', JSON.stringify({ cartItemLists: [], subTotal: '0.00', grandTotal: '0.00' }));
     localStorage.removeItem('branch_id');
     localStorage.removeItem('no_of_cart_items');
     localStorage.removeItem('dropdownValue');
@@ -107,7 +103,8 @@ const Cart: React.FC = () => {
     const serviceType = localStorage.getItem('deliveryType') || '1';
     const tableId = localStorage.getItem('table_id') || '';
     const branchId = localStorage.getItem('branch_id') || '';
-    const numberOfPeoples = localStorage.getItem('no_of_people') || 0;
+    const numberOfPeoples = localStorage.getItem('dropdownValue') || 0;
+
     const itemListUpdated = items.map(it => ({
       item_id: it.itemDetail?.id,
       item_name: it.itemDetail?.name,
@@ -125,6 +122,7 @@ const Cart: React.FC = () => {
       sub_toppings: 0,
       variants: 0,
     }));
+
     const payload = {
       customer_id: userID,
       branch_id: branchId,
@@ -140,10 +138,10 @@ const Cart: React.FC = () => {
         selectedAddress >= 0 ? addresses[selectedAddress] : location
       ),
     };
+
     try {
-      const documenturl = "https://feasto.com.my/web/api/";
       const res = await axios.post(
-        `${documenturl}pos/touch_order/saveOrderData`,
+        'https://feasto.com.my/web/api/pos/touch_order/saveOrderData',
         payload,
         {
           headers: {
@@ -154,8 +152,8 @@ const Cart: React.FC = () => {
           },
         }
       );
-      if (res.data){
-        window.location.href = "/restaurants";
+      if (res.data) {
+        window.location.href = '/restaurants';
         clearCart();
       }
     } catch (err) {
@@ -170,15 +168,23 @@ const Cart: React.FC = () => {
         <div className="space-y-4">
           {items.length ? (
             items.map((it, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center bg-white p-4 rounded-lg shadow"
-              >
-                <div>
-                  <h2 className="font-medium">{it.itemDetail?.name}</h2>
-                  <p className="text-sm text-gray-600">
-                    ₹ {(parseFloat(it.itemDetail?.price ?? 0) + parseFloat(it.extra_amount ?? 0)).toFixed(2)} × {it.qty}
-                  </p>
+              <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={
+                      it.itemDetail?.item_type_name === 'Non-Veg'
+                        ? '/dist/images/logo/non-veg.png'
+                        : '/dist/images/logo/veg.png'
+                    }
+                    alt={it.itemDetail?.item_type_name}
+                    className="w-4 h-4"
+                  />
+                  <div>
+                    <h2 className="font-medium">{it.itemDetail?.name}</h2>
+                    <p className="text-sm text-gray-600">
+                      ₹ {(parseFloat(it.itemDetail?.price ?? 0) + parseFloat(it.extra_amount ?? 0)).toFixed(2)} × {it.qty}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => changeQty(idx, -1)}>
@@ -193,11 +199,7 @@ const Cart: React.FC = () => {
             ))
           ) : (
             <div className="text-center text-gray-500 py-24">
-              <img
-                src="/dist/images/logo/feasto-orange.png"
-                alt="Empty"
-                className="mx-auto mb-4 w-24"
-              />
+              <img src="/dist/images/logo/feasto-orange.png" alt="Empty" className="mx-auto mb-4 w-24" />
               <p className="text-xl">Your cart is empty</p>
             </div>
           )}
@@ -222,7 +224,17 @@ const Cart: React.FC = () => {
               </Button>
             </div>
           </div>
-          {/* <div className="bg-white p-4 rounded-lg shadow">
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Cart;
+
+
+
+{/* <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="font-semibold mb-2">Select Delivery Address</h2>
             <div className="space-y-4">
               {addresses.map((addr, idx) => (
@@ -239,10 +251,3 @@ const Cart: React.FC = () => {
               ))}
             </div>
           </div> */}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Cart;
