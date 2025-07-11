@@ -47,7 +47,6 @@ const RestaurantListPage = () => {
         },
         (err) => {
           console.error("Error fetching location:", err);
-          // Fallback to KL
           setLocation({ latitude: 3.139, longitude: 101.6869 });
         }
       );

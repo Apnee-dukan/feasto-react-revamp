@@ -19,8 +19,18 @@ const Items: React.FC = () => {
   const [deliveryType, setDeliveryType] = useState("1");
   const [showQR, setShowQR] = useState(false);
   const [tableData, setTableData] = useState<any>({});
-
-  // Dialog states
+  const [cart, setCart] = useState<any>(() => {
+    const stored = localStorage.getItem("cartDetailsData");
+    return stored
+      ? JSON.parse(stored)
+      : {
+          cartItemLists: [],
+          subTotal: 0,
+          taxDetails: [],
+          totalTaxAmount: 0,
+          grandTotal: 0,
+        };
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [dropdownValue, setDropdownValue] = useState("1");
 
@@ -43,7 +53,6 @@ const Items: React.FC = () => {
     if (params.table_id) {
       localStorage.setItem("table_id", params.table_id as string);
       setDeliveryType("1");
-      // sales_date:2020-06-30
       const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
         params.branch
       }&table_id=${params.table_id}&sales_date=${
@@ -57,9 +66,7 @@ const Items: React.FC = () => {
             setShowDialog(true);
           }
         })
-        .catch((err) => {
-          console.error("Error fetching table details:", err);
-        });
+        .catch((err) => console.error("Error fetching table details:", err));
     }
 
     const savedDeliveryType = localStorage.getItem("deliveryType");
@@ -75,6 +82,7 @@ const Items: React.FC = () => {
       )
       .then((res) => {
         if (res.data.status) setRestaurant(res.data.Data[0]);
+        console.log(res.data.Data[0].currentBranchOpenStatus);
       });
 
     axios
@@ -86,8 +94,11 @@ const Items: React.FC = () => {
         if (res.data.categories?.status)
           setCategories(res.data.categories.Data);
         if (res.data.items?.status) {
-          setItems(res.data.items.Data);
-          setFilteredItems(res.data.items.Data);
+          const validItems = res.data.items.Data.filter(
+            (item: any) => parseFloat(item.price) > 0
+          );
+          setItems(validItems);
+          setFilteredItems(validItems);
         }
       });
 
@@ -110,8 +121,11 @@ const Items: React.FC = () => {
       )
       .then((res) => {
         if (res.data.status) {
-          setItems(res.data.Data);
-          setFilteredItems(res.data.Data);
+          const validItems = res.data.Data.filter(
+            (item: any) => parseFloat(item.price) > 0
+          );
+          setItems(validItems);
+          setFilteredItems(validItems);
           setSearchQuery("");
         }
       });
@@ -126,18 +140,73 @@ const Items: React.FC = () => {
     setFilteredItems(filtered);
   };
 
-  const tableId = localStorage.getItem("table_id");
+  const updateCart = (newCartItems: any[]) => {
+    const subTotal = newCartItems.reduce(
+      (acc, cur) => acc + parseFloat(cur.totalPrice),
+      0
+    );
+    const taxDetails = (restaurant?.taxDetails || []).map((t: any) => ({
+      ...t,
+      taxAmount: ((subTotal * parseFloat(t.percentage)) / 100).toFixed(2),
+    }));
+    const totalTaxAmount = taxDetails.reduce(
+      (acc: number, t: any) => acc + parseFloat(t.taxAmount),
+      0
+    );
+    const grandTotal = subTotal + totalTaxAmount;
 
-  const handleScan = (data: string | null) => {
-    if (data) {
-      setShowQR(false);
-      window.location.href = data;
+    const updatedCart = {
+      cartItemLists: newCartItems,
+      subTotal: subTotal.toFixed(2),
+      taxDetails,
+      totalTaxAmount: totalTaxAmount.toFixed(2),
+      grandTotal: grandTotal.toFixed(2),
+    };
+
+    localStorage.setItem("cartDetailsData", JSON.stringify(updatedCart));
+    localStorage.setItem("no_of_cart_items", newCartItems.length.toString());
+    setCart(updatedCart);
+  };
+
+  const handleAdd = (item: any) => {
+    const cartCopy = [...cart.cartItemLists];
+    const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
+
+    if (existing) {
+      existing.qty += 1;
+      existing.totalPrice = (existing.qty * parseFloat(item.price)).toFixed(2);
+    } else {
+      cartCopy.push({
+        itemDetail: { id: item.id, name: item.name, price: item.price },
+        variant: null,
+        ingredients: [],
+        toppings: [],
+        qty: 1,
+        totalPrice: parseFloat(item.price).toFixed(2),
+      });
     }
+    updateCart(cartCopy);
   };
 
-  const handleError = (err: any) => {
-    console.error(err);
+  const handleRemove = (itemId: string) => {
+    let cartCopy = [...cart.cartItemLists];
+    const existing = cartCopy.find((i) => i.itemDetail.id === itemId);
+
+    if (!existing) return;
+
+    if (existing.qty === 1) {
+      cartCopy = cartCopy.filter((i) => i.itemDetail.id !== itemId);
+    } else {
+      existing.qty -= 1;
+      existing.totalPrice = (
+        existing.qty * parseFloat(existing.itemDetail.price)
+      ).toFixed(2);
+    }
+
+    updateCart(cartCopy);
   };
+
+  const branchId = localStorage.getItem("branch_id");
 
   return (
     <div className="min-h-screen px-4 py-6 bg-gray-50">
@@ -199,9 +268,9 @@ const Items: React.FC = () => {
           <p className="text-gray-600">{restaurant.cuisine_details}</p>
           <p className="text-sm text-gray-500">
             {restaurant.cityName}, {restaurant.stateName}
-            {tableId && (
+            {tableData[0] && (
               <span className="block mt-1 text-orange-600 font-medium">
-                Table ID: {tableId}
+                Table Name: {tableData[0].name}
               </span>
             )}
           </p>
@@ -253,7 +322,10 @@ const Items: React.FC = () => {
             className="text-sm bg-orange-500 text-white px-4 py-2 rounded-full shadow hover:bg-orange-600 transition"
             onClick={() => setShowQR(true)}
           >
-            <span className="flex items-center justify-center"> <Scan className="w-4 h-4 mr-2" /> Scan QR Code</span>
+            <span className="flex items-center justify-center">
+              {" "}
+              <Scan className="w-4 h-4 mr-2" /> Scan QR Code
+            </span>
           </button>
         ) : (
           <QRScanner
@@ -273,7 +345,7 @@ const Items: React.FC = () => {
           placeholder="Search your Dishes..."
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-green-300"
+          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-orange-300"
         />
       </div>
 
@@ -284,7 +356,7 @@ const Items: React.FC = () => {
             key={cat.id}
             className={`px-3 py-1 rounded-full text-sm font-medium border ${
               selectedCategory === cat.id
-                ? "bg-green-600 text-white"
+                ? "bg-orange-600 text-white"
                 : "bg-white text-gray-700"
             }`}
             onClick={() => filterByCategory(cat.id)}
@@ -305,70 +377,49 @@ const Items: React.FC = () => {
       </div>
 
       {/* Items */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {filteredItems.filter((item: any) => parseFloat(item.price) > 0)
-          .length > 0 ? (
-          filteredItems
-            .filter((item: any) => parseFloat(item.price) > 0)
-            .map((item: any) => (
-              <div
-                key={item.id}
-                className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition"
-              >
-                <div
-                  onClick={() => {
-                    window.location.href = `/itemdetails?branch=${branch}&item_id=${item.id}`;
-                  }}
-                  className="cursor-pointer"
-                >
-                  <div className="flex justify-center items-center">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredItems.map((item) => {
+          const cartItem = cart.cartItemLists.find((c) => c.itemDetail.id === item.id);
+          const isVeg = item.item_type_name === "Veg";
+          return (
+            <div key={item.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span className="font-medium">By {restaurant?.restaurant_name}</span>
+                <span>⭐ {restaurant?.rating ?? 4.2} • {restaurant?.eta ?? '45-50 MINS'}</span>
+              </div>
+
+              <div className="relative flex justify-between items-center mt-3">
+                <div>
+                  <div className="flex items-center gap-2">
                     <img
-                      src={
-                        item.item_img || "/dist/images/logo/feasto-orange-1.png"
-                      }
-                      alt={item.name}
-                      className="w-[10rem] h-40 object-cover mt-3"
+                      src={isVeg ? "/dist/images/logo/veg.png" : "/dist/images/logo/non-veg.png"}
+                      alt={isVeg ? "Veg" : "Non-Veg"}
+                      className="w-4 h-4"
                     />
+                    <h2 className="font-semibold text-base text-gray-900 truncate w-40">{item.name}</h2>
                   </div>
-                  <div className="p-3 flex flex-row justify-between items-start">
-                    <div className="flex items-center justify-between mt-2">
-                      {item.item_type_name === "Non-Veg" ? (
-                        <img
-                          src="/dist/images/logo/non-veg.png"
-                          alt="Non-Veg"
-                          className="w-4 h-4"
-                        />
-                      ) : (
-                        <img
-                          src="/dist/images/logo/veg.png"
-                          alt="Veg"
-                          className="w-4 h-4"
-                        />
-                      )}
-                      <h3 className="font-semibold text-lg truncate ml-1">
-                        {item.name}
-                      </h3>
+                  <p className="text-base font-medium text-black mt-1">₹{item.price}</p>
+                  <button className="text-sm mt-2 text-gray-600 border border-gray-300 rounded-full px-3 py-1 hover:bg-gray-100" onClick={() => {window.location.href = `/itemdetails?branch=${branchId}&item_id=${item.id}` }}>More Details →</button>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <img src={item.item_img || "/dist/images/logo/feasto-orange-1.png"} alt={item.name} className="w-24 h-24 object-cover rounded-full" />
+                  {cartItem ? (
+                    <div className="flex items-center mt-2 gap-2">
+                      <button onClick={() => handleRemove(item.id)} className="px-2 py-1 bg-orange-300 text-white rounded">-</button>
+                      <span>{cartItem.qty}</span>
+                      <button onClick={() => handleAdd(item)} className="px-2 py-1 bg-orange-600 text-white rounded">+</button>
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <p>₹ {item.price}</p>
-                    </div>
-                  </div>
+                  ) : (
+                    <button disabled={!restaurant.currentBranchOpenStatus} onClick={() => handleAdd(item)} className="mt-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-1 rounded-full">ADD</button>
+                  )}
                 </div>
               </div>
-            ))
-        ) : (
-          <div className="text-center col-span-full py-10 text-gray-500">
-            <img
-              src="/dist/images/notfound.png"
-              alt="Not Found"
-              className="mx-auto mb-4 w-40"
-            />
-            <p>No items found</p>
-          </div>
-        )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Cart Button */}
       <button
         onClick={() => navigate("/cart")}
         style={{ backgroundColor: "rgb(255 113 0)" }}

@@ -36,6 +36,7 @@ interface ItemData {
   is_varient: string;
   varient_details: Variant[];
   ingredients_details?: Ingredient[];
+  item_type_name?: string;
 }
 
 interface RestaurantData {
@@ -55,27 +56,41 @@ const ItemDetails: React.FC = () => {
   const [item, setItem] = useState<ItemData | null>(null);
   const [toppings, setToppings] = useState<Topping[]>([]);
   const [currency, setCurrency] = useState<string>("RM");
-  const [cartItem, setCartItem] = useState<any>(null);
+  const [cart, setCart] = useState<any>(() => {
+    const stored = localStorage.getItem("cartDetailsData");
+    return stored
+      ? JSON.parse(stored)
+      : {
+          cartItemLists: [],
+          subTotal: 0,
+          taxDetails: [],
+          totalTaxAmount: 0,
+          grandTotal: 0,
+        };
+  });
   const [activeTab, setActiveTab] = useState<
     "addons" | "ingredients" | "desc" | "review"
   >("addons");
+  const [cartItem, setCartItem] = useState<any>(null);
 
   const params = queryString.parse(window.location.search);
   const branch = params.branch as string;
   const itemId = params.item_id as string;
 
-  useEffect(() => {
-    const headers = {
+  const API_HEADER = {
+    headers: {
       "x-api-key": "Sdrops!23",
       "Access-Control-Allow-Origin": "*",
-      crossdomain: "true",
+      crossdomain: true,
       "Content-Type": "application/json",
-    };
+    },
+  };
 
+  useEffect(() => {
     axios
       .get(
         `https://feasto.com.my/web/api/frontEnd/restaurant/restaurantsDetails?branch_id=${branch}`,
-        { headers }
+        API_HEADER
       )
       .then((res) => {
         if (res.data.status && res.data.Data?.length > 0) {
@@ -86,27 +101,19 @@ const ItemDetails: React.FC = () => {
     axios
       .get(
         `https://feasto.com.my/web/api/pos/touch_order/item_lists?branch_id=${branch}&item_id=${itemId}`,
-        { headers }
+        API_HEADER
       )
       .then((res) => {
         if (res.data.success && res.data.item_lists?.length > 0) {
           const d = res.data.item_lists[0] as ItemData;
           setItem(d);
-          setCartItem({
-            itemDetail: { id: d.id, name: d.name, price: d.price },
-            variant: d.is_varient === "1" ? d.varient_details[0] : null,
-            ingredients: [],
-            toppings: [],
-            qty: 1,
-            totalPrice: parseFloat(d.price),
-          });
         }
       });
 
     axios
       .get(
         `https://feasto.com.my/web/api/pos/touch_order/variant_topping_details?branch_id=${branch}&item_id=${itemId}&size_id=1`,
-        { headers }
+        API_HEADER
       )
       .then((res) => {
         if (res.data.status) {
@@ -116,58 +123,61 @@ const ItemDetails: React.FC = () => {
       });
   }, [branch, itemId]);
 
-  const addToCart = () => {
-    if (!cartItem) return;
-
-    const stored = localStorage.getItem("cartDetailsData");
-    const cart = stored
-      ? JSON.parse(stored)
-      : { cartItemLists: [], subTotal: 0, taxDetails: [], totalTaxAmount: 0 };
-    cart.cartItemLists.push(cartItem);
-    const newSubtotal = cart.cartItemLists.reduce(
-      (a: number, c: any) => a + parseFloat(c.totalPrice),
+  const updateCart = (newCartItems: any[]) => {
+    const subTotal = newCartItems.reduce(
+      (acc, cur) => acc + parseFloat(cur.totalPrice),
       0
     );
-    cart.subTotal = newSubtotal.toFixed(2);
-
-    if (restaurant) {
-      cart.taxDetails = (restaurant.taxDetails || []).map((t) => ({
-        ...t,
-        taxAmount: ((newSubtotal * parseFloat(t.percentage)) / 100).toFixed(2),
-      }));
-      cart.totalTaxAmount = cart.taxDetails
-        .reduce((a: number, t: any) => a + parseFloat(t.taxAmount), 0)
-        .toFixed(2);
-    }
-
-    cart.grandTotal = (
-      parseFloat(cart.subTotal) + parseFloat(cart.totalTaxAmount)
-    ).toFixed(2);
-
-    localStorage.setItem("cartDetailsData", JSON.stringify(cart));
-    localStorage.setItem(
-      "no_of_cart_items",
-      cart.cartItemLists.length.toString()
+    const taxDetails = (restaurant?.taxDetails || []).map((t: any) => ({
+      ...t,
+      taxAmount: ((subTotal * parseFloat(t.percentage)) / 100).toFixed(2),
+    }));
+    const totalTaxAmount = taxDetails.reduce(
+      (acc: number, t: any) => acc + parseFloat(t.taxAmount),
+      0
     );
-    window.location.href = "/cart";
+    const grandTotal = subTotal + totalTaxAmount;
+
+    const updatedCart = {
+      cartItemLists: newCartItems,
+      subTotal: subTotal.toFixed(2),
+      taxDetails,
+      totalTaxAmount: totalTaxAmount.toFixed(2),
+      grandTotal: grandTotal.toFixed(2),
+    };
+
+    localStorage.setItem("cartDetailsData", JSON.stringify(updatedCart));
+    localStorage.setItem("no_of_cart_items", newCartItems.length.toString());
+    setCart(updatedCart);
   };
 
-  const toggleTopping = (t: Topping) => {
-    setCartItem((ci: any) => {
-      if (!ci) return ci;
-      const exists = ci.toppings.find(
-        (x: any) => x.topping_id === t.topping_id
-      );
-      let newToppings = exists
-        ? ci.toppings.filter((x: any) => x.topping_id !== t.topping_id)
-        : [...ci.toppings, t];
-      let priceChange = exists ? -parseFloat(t.price) : parseFloat(t.price);
-      return {
-        ...ci,
-        toppings: newToppings,
-        totalPrice: (parseFloat(ci.totalPrice) + priceChange).toFixed(2),
-      };
-    });
+  const addToCart = () => {
+    if (!item) return;
+
+    const cartCopy = [...cart.cartItemLists];
+    const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
+
+    if (existing) {
+      existing.qty += 1;
+      existing.totalPrice = (
+        existing.qty * parseFloat(existing.itemDetail.price)
+      ).toFixed(2);
+    } else {
+      cartCopy.push({
+        itemDetail: {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+        },
+        variant: null,
+        ingredients: [],
+        toppings: [],
+        qty: 1,
+        totalPrice: parseFloat(item.price).toFixed(2),
+      });
+    }
+    updateCart(cartCopy);
+    window.location.href = "/cart";
   };
 
   if (!item || !restaurant)
@@ -177,7 +187,6 @@ const ItemDetails: React.FC = () => {
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
       {/* Banner */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-white shadow-lg border border-orange-100">
-        {/* Restaurant Image */}
         <div className="w-28 h-28 sm:w-36 sm:h-36 overflow-hidden rounded-xl border-2 border-white shadow-md ring-2 ring-orange-200">
           <img
             src={restaurant.branch_image || "/dist/images/logo/default.png"}
@@ -185,14 +194,10 @@ const ItemDetails: React.FC = () => {
             className="w-full h-full object-cover"
           />
         </div>
-
-        {/* Restaurant Info */}
         <div className="flex-1 text-center sm:text-left">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
             {restaurant.restaurant_name}
           </h2>
-
-          {/* Cuisine Chips */}
           <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
             {restaurant.cuisine_details?.split(",").map((cuisine, index) => (
               <span
@@ -203,8 +208,6 @@ const ItemDetails: React.FC = () => {
               </span>
             ))}
           </div>
-
-          {/* Location & Rating */}
           <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-center sm:justify-start text-sm text-gray-600">
             <p className="flex items-center gap-1">
               📍 {restaurant.cityName}, {restaurant.stateName}
@@ -222,7 +225,6 @@ const ItemDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Item Info */}
       <div className="mt-6 flex flex-col md:flex-row items-center gap-4">
         <img
           src={item.item_img || "/dist/images/logo/default.png"}
@@ -238,89 +240,9 @@ const ItemDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mt-6 flex-wrap">
-        <button
-          onClick={() => setActiveTab("addons")}
-          className={`flex-1 py-2 border-b ${
-            activeTab === "addons" ? "border-orange-600" : "border-transparent"
-          }`}
-        >
-          Add‑Ons
-        </button>
-        <button
-          onClick={() => setActiveTab("ingredients")}
-          className={`flex-1 py-2 border-b ${
-            activeTab === "ingredients"
-              ? "border-orange-600"
-              : "border-transparent"
-          }`}
-        >
-          Ingredients
-        </button>
-        <button
-          onClick={() => setActiveTab("desc")}
-          className={`flex-1 py-2 border-b ${
-            activeTab === "desc" ? "border-orange-600" : "border-transparent"
-          }`}
-        >
-          Description
-        </button>
-        <button
-          onClick={() => setActiveTab("review")}
-          className={`flex-1 py-2 border-b ${
-            activeTab === "review" ? "border-orange-600" : "border-transparent"
-          }`}
-        >
-          Reviews
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="mt-4">
-        {activeTab === "addons" && (
-          <div className="grid grid-cols-2 gap-2">
-            {(toppings || []).map((t) => (
-              <button
-                key={t.topping_id}
-                onClick={() => toggleTopping(t)}
-                className={`p-2 rounded border ${
-                  cartItem?.toppings?.find(
-                    (x: any) => x.topping_id === t.topping_id
-                  )
-                    ? "bg-orange-100"
-                    : "bg-white"
-                }`}
-              >
-                {t.topping_name} (+{currency}
-                {parseFloat(t.price).toFixed(2)})
-              </button>
-            ))}
-          </div>
-        )}
-        {activeTab === "ingredients" && (
-          <ul className="text-gray-700 list-disc ml-6">
-            {(item.ingredients_details || []).length ? (
-              item.ingredients_details?.map((ing) => (
-                <li key={ing.id}>{ing.name}</li>
-              ))
-            ) : (
-              <p className="text-gray-500">No ingredients available</p>
-            )}
-          </ul>
-        )}
-        {activeTab === "desc" && (
-          <div className="p-2 text-gray-700">{item.description}</div>
-        )}
-        {activeTab === "review" && (
-          <div className="p-2 text-gray-700">[Review section coming soon]</div>
-        )}
-      </div>
-
-      {/* Add to Cart */}
       <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex items-center justify-between gap-4">
         <div className="font-bold">
-          {currency} {cartItem?.totalPrice}
+          {item.currency_symbol} {item.price}
         </div>
         <Button onClick={addToCart} className="bg-orange-600 text-white">
           Add To Cart <ShoppingCart className="inline-block ml-2" />
