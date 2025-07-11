@@ -222,7 +222,7 @@ const Home = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, children }) => (
+export const FeatureCard = ({ icon, title, children }) => (
   <div className="p-6 bg-white rounded-lg text-center shadow-sm">
     <div className="w-16 h-16 mx-auto mb-4 text-orange-600">{icon}</div>
     <h3 className="text-xl font-semibold mb-2">{title}</h3>

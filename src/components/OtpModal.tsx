@@ -40,7 +40,7 @@ const OtpModal: React.FC<OtpModalProps> = ({ isOpen, onClose, email, onVerifyOtp
 
   const handleResend = () => {
     setResendCount(resendCount + 1);
-    console.log("Resend OTP to:", email);
+    // console.log("Resend OTP to:", email);
     // Trigger resend OTP API here
   };
 

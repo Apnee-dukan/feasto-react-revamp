@@ -37,8 +37,8 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><span onClick={() => setLoginModal(true)} style={{cursor: 'pointer'}} className="text-gray-400 hover:text-orange-600 transition-colors">Register Merchant</span></li>
-              <li><span onClick={() => setLoginModal(true)} style={{cursor: 'pointer'}} className="text-gray-400 hover:text-orange-600 transition-colors">Merchant Login</span></li>
+              <li><span onClick={() => window.location.href = "https://feasto.com.my/web/login"} style={{cursor: 'pointer'}} className="text-gray-400 hover:text-orange-600 transition-colors">Register Merchant</span></li>
+              <li><span onClick={() => window.location.href = "https://feasto.com.my/web/register"} style={{cursor: 'pointer'}} className="text-gray-400 hover:text-orange-600 transition-colors">Merchant Login</span></li>
               <li><Link to="#" className="text-gray-400 hover:text-orange-600 transition-colors">Feedback</Link></li>
               <li><Link to="/contact" className="text-gray-400 hover:text-orange-600 transition-colors">Contact Us</Link></li>
               <li><Link to="/guidelines" className="text-gray-400 hover:text-orange-600 transition-colors">Business Owner Guidelines</Link></li>
