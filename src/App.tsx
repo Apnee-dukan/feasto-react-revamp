@@ -15,6 +15,14 @@ import Items from './components/Items';
 import Cart from './components/Cart';
 import ItemDetails from './components/ItemDetails';
 import AccountDetails from './components/AccountDetails';
+import Pricing from './components/pricing/Pricing';
+import POSFeaturesPage from './components/features/POSFeaturesPage';
+import InventoryManagementPage from './components/features/InventoryManagementPage';
+import ReportAnalyticsPage from './components/features/ReportAnalyticsPage';
+import LoyaltyProgramPage from './components/features/LoyaltyProgramPage';
+import EInvoicingPage from './components/features/EInvoicingPage';
+import HardwarePage from './components/features/HardwarePage';
+import MarketplaceIntegration from './components/features/MarketplaceIntegration';
 
 function App() {
   return (
@@ -33,6 +41,14 @@ function App() {
           <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/itemdetails" element={<ItemDetails />} />
           <Route path="/termsandconditions" element={<TermsAndConditions />} />
+          <Route path="/point-of-sale" element={<POSFeaturesPage />} />
+          <Route path="/inventory-management" element={<InventoryManagementPage />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="report-analytics" element={<ReportAnalyticsPage />} />
+          <Route path="/loyalty-program-membership" element={<LoyaltyProgramPage />} />
+          <Route path="/e-invoicing" element={<EInvoicingPage />} />
+          <Route path="/hardware" element={<HardwarePage />} />
+          <Route path="/marketplace-integration" element={<MarketplaceIntegration />} />
           <Route path="/AccountDetails" element={<AccountDetails />} />
           <Route path="/policy" element={<PrivacyPolicy />} />
           <Route path="*" element={<Navigate to="/" />} />

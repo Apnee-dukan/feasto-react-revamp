@@ -82,6 +82,7 @@ const Items: React.FC = () => {
       )
       .then((res) => {
         if (res.data.status) setRestaurant(res.data.Data[0]);
+        console.log(res.data.Data[0].currentBranchOpenStatus);
       });
 
     axios
@@ -205,6 +206,8 @@ const Items: React.FC = () => {
     updateCart(cartCopy);
   };
 
+  const branchId = localStorage.getItem("branch_id");
+
   return (
     <div className="min-h-screen px-4 py-6 bg-gray-50">
       {/* Dialog */}
@@ -265,11 +268,11 @@ const Items: React.FC = () => {
           <p className="text-gray-600">{restaurant.cuisine_details}</p>
           <p className="text-sm text-gray-500">
             {restaurant.cityName}, {restaurant.stateName}
-            {/* {tableId && (
+            {tableData[0] && (
               <span className="block mt-1 text-orange-600 font-medium">
-                Table ID: {tableId}
+                Table Name: {tableData[0].name}
               </span>
-            )} */}
+            )}
           </p>
 
           {/* Delivery Type Radio Buttons */}
@@ -342,7 +345,7 @@ const Items: React.FC = () => {
           placeholder="Search your Dishes..."
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-green-300"
+          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-orange-300"
         />
       </div>
 
@@ -353,7 +356,7 @@ const Items: React.FC = () => {
             key={cat.id}
             className={`px-3 py-1 rounded-full text-sm font-medium border ${
               selectedCategory === cat.id
-                ? "bg-green-600 text-white"
+                ? "bg-orange-600 text-white"
                 : "bg-white text-gray-700"
             }`}
             onClick={() => filterByCategory(cat.id)}
@@ -374,63 +377,43 @@ const Items: React.FC = () => {
       </div>
 
       {/* Items */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredItems.map((item) => {
-          const cartItem = cart.cartItemLists.find(
-            (c) => c.itemDetail.id === item.id
-          );
+          const cartItem = cart.cartItemLists.find((c) => c.itemDetail.id === item.id);
+          const isVeg = item.item_type_name === "Veg";
           return (
-            <div
-              key={item.id}
-              className="bg-white p-4 rounded-2xl shadow hover:shadow-lg transition-all flex flex-col justify-between"
-            >
-              <div className="relative">
-                <img
-                  src={item.item_img || "/dist/images/logo/feasto-orange-1.png"}
-                  alt={item.name}
-                  className="w-full h-40 object-cover rounded-xl"
-                />
-
-                {/* Veg/Non-Veg Icon */}
-                <img
-                  src={
-                    item.item_type_name === "Non-Veg"
-                      ? "/dist/images/logo/non-veg.png"
-                      : "/dist/images/logo/veg.png"
-                  }
-                  alt={item.item_type_name}
-                  className="absolute top-2 right-2 w-5 h-5 rounded-full border bg-white p-[2px]"
-                />
+            <div key={item.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span className="font-medium">By {restaurant?.restaurant_name}</span>
+                <span>⭐ {restaurant?.rating ?? 4.2} • {restaurant?.eta ?? '45-50 MINS'}</span>
               </div>
-              <div className="mt-3">`
-                <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg truncate">{item.name}</h3>
-                <p className="text-gray-500 mb-2">₹ {item.price}</p>
-                </div>
-                {cartItem ? (
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      className="px-3 py-1 bg-orange-300 rounded text-white"
-                    >
-                      -
-                    </button>
-                    <span>{cartItem.qty}</span>
-                    <button
-                      onClick={() => handleAdd(item)}
-                      className="px-3 py-1 bg-orange-600 rounded text-white"
-                    >
-                      +
-                    </button>
+
+              <div className="relative flex justify-between items-center mt-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={isVeg ? "/dist/images/logo/veg.png" : "/dist/images/logo/non-veg.png"}
+                      alt={isVeg ? "Veg" : "Non-Veg"}
+                      className="w-4 h-4"
+                    />
+                    <h2 className="font-semibold text-base text-gray-900 truncate w-40">{item.name}</h2>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => handleAdd(item)}
-                    className="w-full mt-2 bg-orange-500 text-white py-1 rounded hover:bg-orange-600"
-                  >
-                    Add
-                  </button>
-                )}
+                  <p className="text-base font-medium text-black mt-1">₹{item.price}</p>
+                  <button className="text-sm mt-2 text-gray-600 border border-gray-300 rounded-full px-3 py-1 hover:bg-gray-100" onClick={() => {window.location.href = `/itemdetails?branch=${branchId}&item_id=${item.id}` }}>More Details →</button>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <img src={item.item_img || "/dist/images/logo/feasto-orange-1.png"} alt={item.name} className="w-24 h-24 object-cover rounded-full" />
+                  {cartItem ? (
+                    <div className="flex items-center mt-2 gap-2">
+                      <button onClick={() => handleRemove(item.id)} className="px-2 py-1 bg-orange-300 text-white rounded">-</button>
+                      <span>{cartItem.qty}</span>
+                      <button onClick={() => handleAdd(item)} className="px-2 py-1 bg-orange-600 text-white rounded">+</button>
+                    </div>
+                  ) : (
+                    <button disabled={!restaurant.currentBranchOpenStatus} onClick={() => handleAdd(item)} className="mt-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-1 rounded-full">ADD</button>
+                  )}
+                </div>
               </div>
             </div>
           );
