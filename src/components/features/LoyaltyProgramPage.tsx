@@ -74,14 +74,14 @@ export const LoyaltyProgramPage: React.FC = () => {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-4 items-center">
           <div>
             <img
-              src="https://images.unsplash.com/photo-1573497161008-7b2ec3cfa849?fit=crop&w=800&q=80"
-              alt="Customer redeeming points at POS"
+              src="/public/dist/images/loyality.webp"
+              alt="Customer redeeming points at Feasto"
               className="w-full rounded-lg shadow"
             />
           </div>
           <div>
             <img
-              src="https://images.unsplash.com/photo-1600180758891-4f1c75171c8f?fit=crop&w=800&q=80"
+              src="/public/dist/images/loyality-rewards.webp"
               alt="Membership tiers dashboard"
               className="w-full rounded-lg shadow"
             />
