@@ -81,8 +81,9 @@ const Items: React.FC = () => {
         API_HEADER
       )
       .then((res) => {
-        if (res.data.status) setRestaurant(res.data.Data[0]);
-        console.log(res.data.Data[0].currentBranchOpenStatus);
+        if (res.data.status) {
+          setRestaurant(res.data.Data[0]);
+        }
       });
 
     axios
@@ -206,228 +207,297 @@ const Items: React.FC = () => {
     updateCart(cartCopy);
   };
 
+  const handleViewMoreDetails = (item: any) => {
+    if (parseInt(item.is_varient) > 0) {
+      const branchId = localStorage.getItem("branch_id");
+      window.location.href = `/itemdetails?branch=${branchId}&item_id=${item.id}`;
+    }
+  };
+
   const branchId = localStorage.getItem("branch_id");
 
   return (
-    <div className="min-h-screen px-4 py-6 bg-gray-50">
-      {/* Dialog */}
-      {showDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
-            {tableData[0]?.available_for ? (
-              <>
-                <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                  Select Number of People
-                </h2>
-                <select
-                  value={dropdownValue}
-                  onChange={(e) => {
-                    setDropdownValue(e.target.value);
-                    localStorage.setItem("dropdownValue", e.target.value);
-                  }}
-                  className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                >
-                  {Array.from(
-                    { length: tableData[0]?.available_for },
-                    (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    )
-                  )}
-                </select>
-                <button
-                  onClick={() => setShowDialog(false)}
-                  className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition"
-                >
-                  Submit
-                </button>
-              </>
-            ) : (
-              <>
-                <p>No available seats</p>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
+    <>
       {/* Header */}
       {restaurant && (
-        <div className="text-center mb-6">
-          <img
-            src={
-              restaurant.branch_image || "/dist/images/logo/feasto-orange-1.png"
-            }
-            alt={restaurant.restaurant_name}
-            className="mx-auto w-24 h-24 rounded-full object-cover shadow"
-          />
-          <h2 className="text-xl font-semibold mt-3">
-            {restaurant.restaurant_name}
-          </h2>
-          <p className="text-gray-600">{restaurant.cuisine_details}</p>
-          <p className="text-sm text-gray-500">
-            {restaurant.cityName}, {restaurant.stateName}
-            {tableData[0] && (
-              <span className="block mt-1 text-orange-600 font-medium">
-                Table Name: {tableData[0].name}
-              </span>
-            )}
-          </p>
+        <div className="bg-white shadow-sm border-b border-gray-200 rounded-b-2xl px-4 py-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start sm:justify-between gap-4">
+            {/* Logo and Name Section */}
+            <div className="flex items-center gap-4">
+              <img
+                src={
+                  restaurant.branch_image ||
+                  "/dist/images/logo/feasto-orange-1.png"
+                }
+                alt={restaurant.restaurant_name}
+                className="w-16 h-16 rounded-full object-cover border border-gray-300"
+              />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">
+                  {restaurant.restaurant_name}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {restaurant.cityName}, {restaurant.stateName}
+                </p>
+                {tableData[0] && (
+                  <p className="text-sm text-orange-600 font-medium">
+                    Table: {tableData[0].name}
+                  </p>
+                )}
+              </div>
+            </div>
 
-          {/* Delivery Type Radio Buttons */}
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-gray-700 mb-2">
-              Choose Delivery Option
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {[
-                { label: "Dine In", value: "1" },
-                { label: "Take Away", value: "2" },
-                { label: "Delivery", value: "3" },
-              ].map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all duration-200
-                    ${
-                      deliveryType === option.value
-                        ? "bg-orange-500 text-white border-orange-600"
-                        : "bg-white text-gray-800 hover:bg-orange-100 border-orange-300"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="deliveryType"
-                    value={option.value}
-                    checked={deliveryType === option.value}
-                    disabled={option.value === "3"}
-                    onChange={() => {
-                      setDeliveryType(option.value);
-                      localStorage.setItem("deliveryType", option.value);
-                    }}
-                    className="form-radio text-orange-500 focus:ring-orange-500"
-                  />
-                  {option.label}
-                </label>
-              ))}
+            {/* Right Section (Search + Category) */}
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3 sm:items-center">
+              <input
+                type="text"
+                placeholder="Search Dishes..."
+                value={searchQuery}
+                onChange={handleSearch}
+                className="w-full sm:w-60 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-orange-400 focus:outline-none"
+              />
+
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setFilteredItems(items);
+                    setSelectedCategory("");
+                    setSearchQuery("");
+                  } else {
+                    filterByCategory(value);
+                  }
+                }}
+                className="w-full sm:w-48 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-orange-400 focus:outline-none"
+              >
+                <option value="">All Categories</option>
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
       )}
 
-      {/* QR Code Scanner (Mobile only view) */}
-      <div className="max-w-md mx-auto mb-4 sm:hidden text-center">
-        {!showQR ? (
-          <button
-            className="text-sm bg-orange-500 text-white px-4 py-2 rounded-full shadow hover:bg-orange-600 transition"
-            onClick={() => setShowQR(true)}
-          >
-            <span className="flex items-center justify-center">
-              {" "}
-              <Scan className="w-4 h-4 mr-2" /> Scan QR Code
-            </span>
-          </button>
-        ) : (
-          <QRScanner
-            onScan={(url) => {
-              setShowQR(false);
-              window.location.href = url;
-            }}
-            onClose={() => setShowQR(false)}
-          />
+      <div className="min-h-screen px-4 py-6 bg-gray-50">
+        {/* Dialog */}
+        {showDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
+              {tableData[0]?.available_for ? (
+                <>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    Select Number of People
+                  </h2>
+                  <select
+                    value={dropdownValue}
+                    onChange={(e) => {
+                      setDropdownValue(e.target.value);
+                      localStorage.setItem("dropdownValue", e.target.value);
+                    }}
+                    className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  >
+                    {Array.from(
+                      { length: tableData[0]?.available_for },
+                      (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {i + 1}
+                        </option>
+                      )
+                    )}
+                  </select>
+                  <button
+                    onClick={() => setShowDialog(false)}
+                    className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition"
+                  >
+                    Submit
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p>No available seats</p>
+                </>
+              )}
+            </div>
+          </div>
         )}
-      </div>
 
-      {/* Search */}
-      <div className="max-w-md mx-auto mb-6">
-        <input
-          type="text"
-          placeholder="Search your Dishes..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-orange-300"
-        />
-      </div>
+        <div className="flex flex-wrap justify-center sm:justify-center gap-2 mb-4">
+          <label className="text-lg font-medium text-gray-700">
+            Delivery Type:
+          </label>
+          {/* Delivery Type Options */}
+          {[
+            { label: "Dine In", value: "1" },
+            { label: "Take Away", value: "2" },
+            { label: "Delivery", value: "3" },
+          ].map((option) => (
+            <label
+              key={option.value}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition
+                  ${
+                    deliveryType === option.value
+                      ? "bg-orange-500 text-white border-orange-600"
+                      : "bg-white text-gray-800 hover:bg-orange-100 border-orange-300"
+                  }`}
+            >
+              <input
+                type="radio"
+                name="deliveryType"
+                value={option.value}
+                checked={deliveryType === option.value}
+                disabled={option.value === "3"}
+                onChange={() => {
+                  setDeliveryType(option.value);
+                  localStorage.setItem("deliveryType", option.value);
+                }}
+                className="form-radio text-orange-500 focus:ring-orange-500"
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
 
-      {/* Categories */}
-      <div className="flex flex-wrap justify-center gap-2 mb-6">
-        {categories.map((cat: any) => (
-          <button
-            key={cat.id}
-            className={`px-3 py-1 rounded-full text-sm font-medium border ${
-              selectedCategory === cat.id
-                ? "bg-orange-600 text-white"
-                : "bg-white text-gray-700"
-            }`}
-            onClick={() => filterByCategory(cat.id)}
-          >
-            {cat.name}
-          </button>
-        ))}
+        {/* QR Code Scanner (Mobile only view) */}
+        <div className="max-w-md mx-auto mb-4 sm:hidden text-center">
+          {!showQR ? (
+            <button
+              className="text-sm bg-orange-500 text-white px-4 py-2 rounded-full shadow hover:bg-orange-600 transition"
+              onClick={() => setShowQR(true)}
+            >
+              <span className="flex items-center justify-center">
+                {" "}
+                <Scan className="w-4 h-4 mr-2" /> Scan QR Code
+              </span>
+            </button>
+          ) : (
+            <QRScanner
+              onScan={(url) => {
+                setShowQR(false);
+                window.location.href = url;
+              }}
+              onClose={() => setShowQR(false)}
+            />
+          )}
+        </div>
+
+        {/* Items */}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredItems.map((item) => {
+            const cartItem = cart.cartItemLists.find(
+              (c) => c.itemDetail.id === item.id
+            );
+            const isVeg = item.item_type_name === "Veg";
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col justify-between"
+              >
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span className="font-medium">
+                    By {restaurant?.restaurant_name}
+                  </span>
+                  <span>
+                    ⭐ {restaurant?.rating ?? 4.2} •{" "}
+                    {restaurant?.eta ?? "45-50 MINS"}
+                  </span>
+                </div>
+
+                <div className="relative flex justify-between items-center mt-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={
+                          isVeg
+                            ? "/dist/images/logo/veg.png"
+                            : "/dist/images/logo/non-veg.png"
+                        }
+                        alt={isVeg ? "Veg" : "Non-Veg"}
+                        className="w-4 h-4"
+                      />
+                      <h2 className="font-semibold text-base text-gray-900 truncate w-40">
+                        {item.name}
+                      </h2>
+                    </div>
+                    <p className="text-base font-medium text-black mt-1">
+                      ₹{item.price}
+                    </p>
+                    <button
+                      className={`text-sm mt-2 border rounded-full px-3 py-1 transition ${
+                        parseInt(item.is_varient) <= 0 ||
+                        !restaurant.currentBranchOpenStatus
+                          ? "text-gray-400 border-gray-300 cursor-not-allowed opacity-60"
+                          : "text-gray-600 border-gray-300 hover:bg-gray-100"
+                      }`}
+                      disabled={
+                        parseInt(item.is_varient) <= 0 ||
+                        !restaurant.currentBranchOpenStatus
+                      }
+                      onClick={() => {
+                        handleViewMoreDetails(item);
+                      }}
+                    >
+                      More Details →
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={
+                        item.item_img || "/dist/images/logo/feasto-orange-1.png"
+                      }
+                      alt={item.name}
+                      className="w-24 h-24 object-cover rounded-full"
+                    />
+                    {cartItem ? (
+                      <div className="flex items-center mt-2 gap-2">
+                        <button
+                          onClick={() => handleRemove(item.id)}
+                          className="px-2 py-1 bg-orange-300 text-white rounded"
+                        >
+                          -
+                        </button>
+                        <span>{cartItem.qty}</span>
+                        <button
+                          onClick={() => handleAdd(item)}
+                          className="px-2 py-1 bg-orange-600 text-white rounded"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        disabled={!restaurant.currentBranchOpenStatus}
+                        onClick={() => handleAdd(item)}
+                        className={`mt-2 font-bold px-5 py-1 rounded-full transition ${
+                          !restaurant.currentBranchOpenStatus
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                            : "bg-orange-500 hover:bg-orange-700 text-white"
+                        }`}
+                      >
+                        ADD
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         <button
-          className="px-3 py-1 rounded-full text-sm font-medium bg-white text-gray-700 border"
-          onClick={() => {
-            setFilteredItems(items);
-            setSelectedCategory("");
-            setSearchQuery("");
-          }}
+          onClick={() => navigate("/cart")}
+          style={{ backgroundColor: "rgb(255 113 0)" }}
+          className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition"
         >
-          All
+          <ShoppingCart />
         </button>
       </div>
-
-      {/* Items */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredItems.map((item) => {
-          const cartItem = cart.cartItemLists.find((c) => c.itemDetail.id === item.id);
-          const isVeg = item.item_type_name === "Veg";
-          return (
-            <div key={item.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
-              <div className="flex justify-between text-sm text-gray-500">
-                <span className="font-medium">By {restaurant?.restaurant_name}</span>
-                <span>⭐ {restaurant?.rating ?? 4.2} • {restaurant?.eta ?? '45-50 MINS'}</span>
-              </div>
-
-              <div className="relative flex justify-between items-center mt-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={isVeg ? "/dist/images/logo/veg.png" : "/dist/images/logo/non-veg.png"}
-                      alt={isVeg ? "Veg" : "Non-Veg"}
-                      className="w-4 h-4"
-                    />
-                    <h2 className="font-semibold text-base text-gray-900 truncate w-40">{item.name}</h2>
-                  </div>
-                  <p className="text-base font-medium text-black mt-1">₹{item.price}</p>
-                  <button className="text-sm mt-2 text-gray-600 border border-gray-300 rounded-full px-3 py-1 hover:bg-gray-100" onClick={() => {window.location.href = `/itemdetails?branch=${branchId}&item_id=${item.id}` }}>More Details →</button>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <img src={item.item_img || "/dist/images/logo/feasto-orange-1.png"} alt={item.name} className="w-24 h-24 object-cover rounded-full" />
-                  {cartItem ? (
-                    <div className="flex items-center mt-2 gap-2">
-                      <button onClick={() => handleRemove(item.id)} className="px-2 py-1 bg-orange-300 text-white rounded">-</button>
-                      <span>{cartItem.qty}</span>
-                      <button onClick={() => handleAdd(item)} className="px-2 py-1 bg-orange-600 text-white rounded">+</button>
-                    </div>
-                  ) : (
-                    <button disabled={!restaurant.currentBranchOpenStatus} onClick={() => handleAdd(item)} className="mt-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-1 rounded-full">ADD</button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <button
-        onClick={() => navigate("/cart")}
-        style={{ backgroundColor: "rgb(255 113 0)" }}
-        className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition"
-      >
-        <ShoppingCart />
-      </button>
-    </div>
+    </>
   );
 };
 
