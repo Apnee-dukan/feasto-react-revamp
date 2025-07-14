@@ -4,6 +4,7 @@ import queryString from "query-string";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Scan, ShoppingCart } from "lucide-react";
 import QRScanner from "./QRScanner";
+import { parse } from "path";
 
 const Items: React.FC = () => {
   const location = useLocation();
@@ -170,6 +171,11 @@ const Items: React.FC = () => {
   };
 
   const handleAdd = (item: any) => {
+    if (parseInt(item.is_varient) > 0) {
+      const branchId = localStorage.getItem("branch_id");
+      window.location.href = `/itemdetails?branch=${branchId}&item_id=${item.id}`;
+      return;
+    }
     const cartCopy = [...cart.cartItemLists];
     const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
 
@@ -220,7 +226,7 @@ const Items: React.FC = () => {
     <>
       {/* Header */}
       {restaurant && (
-        <div className="bg-white shadow-sm border-b border-gray-200 rounded-b-2xl px-4 py-6 mb-6">
+        <div className="bg-white shadow-sm border-b border-gray-200 rounded-b-2xl px-4 py-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start sm:justify-between gap-4">
             {/* Logo and Name Section */}
             <div className="flex items-center gap-4">
@@ -428,15 +434,12 @@ const Items: React.FC = () => {
                     </p>
                     <button
                       className={`text-sm mt-2 border rounded-full px-3 py-1 transition ${
-                        parseInt(item.is_varient) <= 0 ||
+                        parseInt( true || item.is_varient) <= 0 ||
                         !restaurant.currentBranchOpenStatus
                           ? "text-gray-400 border-gray-300 cursor-not-allowed opacity-60"
                           : "text-gray-600 border-gray-300 hover:bg-gray-100"
                       }`}
-                      disabled={
-                        parseInt(item.is_varient) <= 0 ||
-                        !restaurant.currentBranchOpenStatus
-                      }
+                      disabled={true || parseInt(item.is_varient) <= 0 || !restaurant.currentBranchOpenStatus}
                       onClick={() => {
                         handleViewMoreDetails(item);
                       }}

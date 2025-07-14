@@ -1,3 +1,5 @@
+// ✅ FILE: ItemDetails.tsx
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import queryString from "query-string";
@@ -36,6 +38,7 @@ interface ItemData {
   is_varient: string;
   varient_details: Variant[];
   ingredients_details?: Ingredient[];
+  topping_details?: Topping[]; // <-- added this to pull toppings from here
   item_type_name?: string;
 }
 
@@ -55,6 +58,8 @@ const ItemDetails: React.FC = () => {
   const [restaurant, setRestaurant] = useState<RestaurantData | null>(null);
   const [item, setItem] = useState<ItemData | null>(null);
   const [toppings, setToppings] = useState<Topping[]>([]);
+  const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [currency, setCurrency] = useState<string>("RM");
   const [cart, setCart] = useState<any>(() => {
     const stored = localStorage.getItem("cartDetailsData");
@@ -68,10 +73,6 @@ const ItemDetails: React.FC = () => {
           grandTotal: 0,
         };
   });
-  const [activeTab, setActiveTab] = useState<
-    "addons" | "ingredients" | "desc" | "review"
-  >("addons");
-  const [cartItem, setCartItem] = useState<any>(null);
 
   const params = queryString.parse(window.location.search);
   const branch = params.branch as string;
@@ -107,18 +108,11 @@ const ItemDetails: React.FC = () => {
         if (res.data.success && res.data.item_lists?.length > 0) {
           const d = res.data.item_lists[0] as ItemData;
           setItem(d);
-        }
-      });
-
-    axios
-      .get(
-        `https://feasto.com.my/web/api/pos/touch_order/variant_topping_details?branch_id=${branch}&item_id=${itemId}&size_id=1`,
-        API_HEADER
-      )
-      .then((res) => {
-        if (res.data.status) {
-          setToppings(res.data.result.topping_details || []);
-          setCurrency(res.data.result.currency_symbol || "RM");
+          if (d.varient_details?.length > 0) {
+            setSelectedVariant(d.varient_details[0]);
+          }
+          setCurrency(d.currency_symbol || "RM");
+          setToppings(d.topping_details || []);
         }
       });
   }, [branch, itemId]);
@@ -157,23 +151,36 @@ const ItemDetails: React.FC = () => {
     const cartCopy = [...cart.cartItemLists];
     const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
 
+    const toppingDetails = toppings.filter((t) =>
+      selectedToppings.includes(t.topping_id)
+    );
+
+    const basePrice = selectedVariant
+      ? parseFloat(selectedVariant.price)
+      : parseFloat(item.price);
+
+    const toppingPrice = toppingDetails.reduce(
+      (acc, cur) => acc + parseFloat(cur.price),
+      0
+    );
+
+    const total = (basePrice + toppingPrice).toFixed(2);
+
     if (existing) {
       existing.qty += 1;
-      existing.totalPrice = (
-        existing.qty * parseFloat(existing.itemDetail.price)
-      ).toFixed(2);
+      existing.totalPrice = (existing.qty * parseFloat(total)).toFixed(2);
     } else {
       cartCopy.push({
         itemDetail: {
           id: item.id,
           name: item.name,
-          price: item.price,
+          price: total,
         },
-        variant: null,
+        variant: selectedVariant,
+        toppings: toppingDetails,
         ingredients: [],
-        toppings: [],
         qty: 1,
-        totalPrice: parseFloat(item.price).toFixed(2),
+        totalPrice: total,
       });
     }
     updateCart(cartCopy);
@@ -184,71 +191,119 @@ const ItemDetails: React.FC = () => {
     return <div className="p-6 text-center">Loading…</div>;
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto">
-      {/* Banner */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-white shadow-lg border border-orange-100">
-        <div className="w-28 h-28 sm:w-36 sm:h-36 overflow-hidden rounded-xl border-2 border-white shadow-md ring-2 ring-orange-200">
-          <img
-            src={restaurant.branch_image || "/dist/images/logo/default.png"}
-            alt="Restaurant"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="flex-1 text-center sm:text-left">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
-            {restaurant.restaurant_name}
-          </h2>
-          <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
-            {restaurant.cuisine_details?.split(",").map((cuisine, index) => (
-              <span
-                key={index}
-                className="text-xs sm:text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium"
-              >
-                {cuisine.trim()}
-              </span>
-            ))}
-          </div>
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-center sm:justify-start text-sm text-gray-600">
-            <p className="flex items-center gap-1">
-              📍 {restaurant.cityName}, {restaurant.stateName}
-            </p>
-            <div className="flex items-center gap-1">
-              <Star size={16} className="text-yellow-400 fill-yellow-400" />
-              <span className="font-medium text-gray-800">
-                {parseFloat(restaurant.rating || "0").toFixed(1)}
-              </span>
-              <span className="text-gray-500">
-                ({restaurant.reviewDetails?.length || 0} reviews)
-              </span>
+    <>
+    <div className="bg-white border-b border-gray-200 rounded-b-2xl shadow-sm px-6 py-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <img
+              src={restaurant.branch_image || "/dist/images/logo/default.png"}
+              alt="Restaurant"
+              className="w-16 h-16 object-cover rounded-full border"
+            />
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {restaurant.restaurant_name}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {restaurant.cityName}, {restaurant.stateName}
+              </p>
+              <p className="text-xs text-orange-500">
+                ⭐ {parseFloat(restaurant.rating || "0").toFixed(1)} (
+                {restaurant.reviewDetails?.length || 0} reviews)
+              </p>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="mt-6 flex flex-col md:flex-row items-center gap-4">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      {/* Item Info */}
+      <div className="mt-4 flex flex-col md:flex-row items-start gap-6">
         <img
           src={item.item_img || "/dist/images/logo/default.png"}
           alt={item.name}
-          className="w-40 h-40 rounded-lg object-cover mx-auto"
+          className="w-40 h-40 rounded-lg object-cover"
         />
         <div className="flex-1">
-          <h3 className="text-xl font-semibold">{item.name}</h3>
-          <p className="text-gray-600">{item.description}</p>
-          <p className="text-lg font-bold mt-2">
-            {item.currency_symbol} {parseFloat(item.price).toFixed(2)}
-          </p>
+          <h3 className="text-xl font-semibold mb-1">{item.name}</h3>
+          <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+
+          {/* Variant Selection */}
+          {item.varient_details?.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Choose Variant:
+              </p>
+              <div className="flex flex-col gap-2">
+                {item.varient_details.map((variant) => (
+                  <label key={variant.id} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="variant"
+                      checked={selectedVariant?.id === variant.id}
+                      onChange={() => setSelectedVariant(variant)}
+                    />
+                    <span>
+                      {variant.name} - {currency}{" "}
+                      {parseFloat(variant.price).toFixed(2)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Topping Selection */}
+          {toppings.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Select Toppings:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {toppings.map((topping) => (
+                  <label
+                    key={topping.topping_id}
+                    className="flex items-center gap-2 text-sm border border-gray-300 rounded-full px-3 py-1 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedToppings.includes(topping.topping_id)}
+                      onChange={() => {
+                        setSelectedToppings((prev) =>
+                          prev.includes(topping.topping_id)
+                            ? prev.filter((id) => id !== topping.topping_id)
+                            : [...prev, topping.topping_id]
+                        );
+                      }}
+                    />
+                    {topping.topping_name} (+{currency}{" "}
+                    {parseFloat(topping.price).toFixed(2)})
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex items-center justify-between gap-4">
+      {/* Bottom Add to Cart */}
+      <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex items-center justify-between gap-4 z-10">
         <div className="font-bold">
-          {item.currency_symbol} {item.price}
+          {currency}{" "}
+          {(
+            (selectedVariant
+              ? parseFloat(selectedVariant.price)
+              : parseFloat(item.price)) +
+            toppings
+              .filter((t) => selectedToppings.includes(t.topping_id))
+              .reduce((acc, cur) => acc + parseFloat(cur.price), 0)
+          ).toFixed(2)}
         </div>
         <Button onClick={addToCart} className="bg-orange-600 text-white">
           Add To Cart <ShoppingCart className="inline-block ml-2" />
         </Button>
       </div>
     </div>
+    </>
   );
 };
 

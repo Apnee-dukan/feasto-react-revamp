@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { X, Plus, Minus } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { X, Plus, Minus } from "lucide-react";
 
 const Cart: React.FC = () => {
   const [cartData, setCartData] = useState<any>({});
@@ -11,18 +11,20 @@ const Cart: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<number>(-1);
   const [userID, setUserID] = useState<string | null>(null);
   const [store, setStore] = useState<any>(null);
-  const [currency, setCurrency] = useState('₹');
+  const [currency, setCurrency] = useState("₹");
+  const [branchId, setBranchId] = useState<string | null>(null);
 
   useEffect(() => {
-    const uid = localStorage.getItem('userid');
-    const branch = localStorage.getItem('branch_id');
-    const cart = localStorage.getItem('cartDetailsData');
-    const storeInfo = localStorage.getItem('storeDetails');
+    const uid = localStorage.getItem("userid");
+    const branch = localStorage.getItem("branch_id");
+    const cart = localStorage.getItem("cartDetailsData");
+    const storeInfo = localStorage.getItem("storeDetails");
 
     if (uid) {
       setUserID(uid);
       fetchAddresses(uid);
     }
+    if (branch) setBranchId(branch);
     if (branch && storeInfo) setStore(JSON.parse(storeInfo));
 
     if (cart) {
@@ -37,10 +39,10 @@ const Cart: React.FC = () => {
     try {
       const res = await axios.get(url, {
         headers: {
-          'x-api-key': 'Sdrops!23',
-          'Access-Control-Allow-Origin': '*',
-          'crossdomain': true,
-          'Content-Type': 'application/json;charset=UTF-8',
+          "x-api-key": "Sdrops!23",
+          "Access-Control-Allow-Origin": "*",
+          crossdomain: true,
+          "Content-Type": "application/json;charset=UTF-8",
         },
       });
       if (res.data.status) setAddresses(res.data.Data);
@@ -62,12 +64,14 @@ const Cart: React.FC = () => {
       ...cartData,
       cartItemLists: newItems,
       subTotal: subtotal.toFixed(2),
-      grandTotal: (subtotal + parseFloat(cartData?.totalTaxAmount ?? 0)).toFixed(2),
+      grandTotal: (
+        subtotal + parseFloat(cartData?.totalTaxAmount ?? 0)
+      ).toFixed(2),
     };
     setItems(newItems);
     setCartData(updated);
-    localStorage.setItem('cartDetailsData', JSON.stringify(updated));
-    localStorage.setItem('no_of_cart_items', `${newItems.length}`);
+    localStorage.setItem("cartDetailsData", JSON.stringify(updated));
+    localStorage.setItem("no_of_cart_items", `${newItems.length}`);
   };
 
   const changeQty = (idx: number, delta: number) => {
@@ -87,12 +91,19 @@ const Cart: React.FC = () => {
   };
 
   const clearCart = () => {
-    localStorage.setItem('cartDetailsData', JSON.stringify({ cartItemLists: [], subTotal: '0.00', grandTotal: '0.00' }));
-    localStorage.removeItem('branch_id');
-    localStorage.removeItem('no_of_cart_items');
-    localStorage.removeItem('dropdownValue');
-    localStorage.removeItem('deliveryType');
-    localStorage.removeItem('table_id');
+    localStorage.setItem(
+      "cartDetailsData",
+      JSON.stringify({
+        cartItemLists: [],
+        subTotal: "0.00",
+        grandTotal: "0.00",
+      })
+    );
+    localStorage.removeItem("branch_id");
+    localStorage.removeItem("no_of_cart_items");
+    localStorage.removeItem("dropdownValue");
+    localStorage.removeItem("deliveryType");
+    localStorage.removeItem("table_id");
     setItems([]);
     setCartData({});
     setStore(null);
@@ -100,28 +111,34 @@ const Cart: React.FC = () => {
 
   const placeOrder = async () => {
     if (!items.length) return;
-    const serviceType = localStorage.getItem('deliveryType') || '1';
-    const tableId = localStorage.getItem('table_id') || '';
-    const branchId = localStorage.getItem('branch_id') || '';
-    const numberOfPeoples = localStorage.getItem('dropdownValue') || 0;
+    const serviceType = localStorage.getItem("deliveryType") || "1";
+    const tableId = localStorage.getItem("table_id") || "";
+    const branchId = localStorage.getItem("branch_id") || "";
+    const numberOfPeoples = localStorage.getItem("dropdownValue") || 0;
 
-    const itemListUpdated = items.map(it => ({
-      item_id: it.itemDetail?.id,
-      item_name: it.itemDetail?.name,
-      item_qty: it.qty,
-      item_price: parseFloat(it.itemDetail?.price ?? 0),
-      is_parcel: it.is_parcel ? 1 : 0,
-      parcel_amount: parseFloat(it.parcel_amount ?? 0),
-      parcel_price: parseFloat(it.price ?? 0),
-      item_amount: parseFloat(it.totalPrice ?? 0),
-      extra_amount: parseFloat(it.extra_amount ?? 0),
-      total_amount: parseFloat(it.totalPrice ?? 0),
-      comments: '',
-      ingredients: '',
-      toppings: 0,
-      sub_toppings: 0,
-      variants: 0,
-    }));
+    const itemListUpdated = items.map((it) => {
+      const hasToppings = Array.isArray(it.toppings) && it.toppings.length > 0;
+
+      return {
+        item_id: it.itemDetail?.id,
+        item_name: it.itemDetail?.name,
+        item_qty: it.qty,
+        item_price: parseFloat(it.itemDetail?.price ?? 0),
+        is_parcel: it.is_parcel ? 1 : 0,
+        parcel_amount: parseFloat(it.parcel_amount ?? 0),
+        parcel_price: parseFloat(it.price ?? 0),
+        item_amount: parseFloat(it.totalPrice ?? 0),
+        extra_amount: parseFloat(it.extra_amount ?? 0),
+        total_amount: parseFloat(it.totalPrice ?? 0),
+        comments: "",
+        ingredients: "",
+        toppings: hasToppings
+          ? it.toppings.map((t) => t.topping_id).join(",")
+          : 0,
+        sub_toppings: 0,
+        variants: it.variant?.id ?? 0,
+      };
+    });
 
     const payload = {
       customer_id: userID,
@@ -141,19 +158,19 @@ const Cart: React.FC = () => {
 
     try {
       const res = await axios.post(
-        'https://feasto.com.my/web/api/pos/touch_order/saveOrderData',
+        "https://feasto.com.my/web/api/pos/touch_order/saveOrderData",
         payload,
         {
           headers: {
-            'x-api-key': 'Sdrops!23',
-            'Access-Control-Allow-Origin': '*',
-            'crossdomain': true,
-            'Content-Type': 'application/json;charset=UTF-8',
+            "x-api-key": "Sdrops!23",
+            "Access-Control-Allow-Origin": "*",
+            crossdomain: true,
+            "Content-Type": "application/json;charset=UTF-8",
           },
         }
       );
       if (res.data) {
-        window.location.href = '/restaurants';
+        window.location.href = `/items?branch=${branchId}`;
         clearCart();
       }
     } catch (err) {
@@ -168,13 +185,16 @@ const Cart: React.FC = () => {
         <div className="space-y-4">
           {items.length ? (
             items.map((it, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+              <div
+                key={idx}
+                className="flex justify-between items-center bg-white p-4 rounded-lg shadow"
+              >
                 <div className="flex items-center gap-3">
                   <img
                     src={
-                      it.itemDetail?.item_type_name === 'Non-Veg'
-                        ? '/dist/images/logo/non-veg.png'
-                        : '/dist/images/logo/veg.png'
+                      it.itemDetail?.item_type_name === "Non-Veg"
+                        ? "/dist/images/logo/non-veg.png"
+                        : "/dist/images/logo/veg.png"
                     }
                     alt={it.itemDetail?.item_type_name}
                     className="w-4 h-4"
@@ -182,7 +202,12 @@ const Cart: React.FC = () => {
                   <div>
                     <h2 className="font-medium">{it.itemDetail?.name}</h2>
                     <p className="text-sm text-gray-600">
-                      ₹ {(parseFloat(it.itemDetail?.price ?? 0) + parseFloat(it.extra_amount ?? 0)).toFixed(2)} × {it.qty}
+                      ₹{" "}
+                      {(
+                        parseFloat(it.itemDetail?.price ?? 0) +
+                        parseFloat(it.extra_amount ?? 0)
+                      ).toFixed(2)}{" "}
+                      × {it.qty}
                     </p>
                   </div>
                 </div>
@@ -199,27 +224,60 @@ const Cart: React.FC = () => {
             ))
           ) : (
             <div className="text-center text-gray-500 py-24">
-              <img src="/dist/images/logo/feasto-orange.png" alt="Empty" className="mx-auto mb-4 w-24" />
+              <img
+                src="/dist/images/logo/feasto-orange.png"
+                alt="Empty"
+                className="mx-auto mb-4 w-24"
+              />
               <p className="text-xl">Your cart is empty</p>
             </div>
           )}
+
+          {/* ✅ Add More Items Button */}
+          <div className="pt-4 text-center">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                if (branchId) {
+                  window.location.href = `/items?branch=${branchId}`;
+                }
+              }}
+            >
+              + Add More Items
+            </Button>
+          </div>
         </div>
+
         <div className="space-y-6">
           <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="font-semibold mb-2">Order Summary</h2>
             <div className="flex justify-between py-1">
               <span>Sub‑Total:</span>
-              <span>{currency} {cartData.subTotal}</span>
+              <span>
+                {currency} {cartData.subTotal}
+              </span>
             </div>
             <div className="flex justify-between font-semibold py-1">
               <span>Total:</span>
-              <span>{currency} {cartData.grandTotal}</span>
+              <span>
+                {currency} {cartData.grandTotal}
+              </span>
             </div>
             <div className="mt-4 flex gap-2">
-              <Button onClick={() => placeOrder()} disabled={!items.length} className="flex-1">
+              <Button
+                onClick={() => placeOrder()}
+                disabled={!items.length}
+                className="flex-1"
+              >
                 Place Order
               </Button>
-              <Button variant="outline" onClick={() => clearCart()} disabled={!items.length} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => clearCart()}
+                disabled={!items.length}
+                className="flex-1"
+              >
                 Clear
               </Button>
             </div>
@@ -232,9 +290,8 @@ const Cart: React.FC = () => {
 
 export default Cart;
 
-
-
-{/* <div className="bg-white p-4 rounded-lg shadow">
+{
+  /* <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="font-semibold mb-2">Select Delivery Address</h2>
             <div className="space-y-4">
               {addresses.map((addr, idx) => (
@@ -250,4 +307,5 @@ export default Cart;
                 </div>
               ))}
             </div>
-          </div> */}
+          </div> */
+}
