@@ -251,19 +251,20 @@ export default function AccountDetails() {
       <h1 className="text-2xl font-semibold">Account Details</h1>
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {["dashboard", "orders", "addresses", "profile"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t as any)}
-            className={`px-4 py-2 rounded ${
-              tab === t ? "bg-orange-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-wrap gap-2">
+  {["dashboard", "orders", "addresses", "profile"].map((t) => (
+    <button
+      key={t}
+      onClick={() => setTab(t as any)}
+      className={`px-4 py-2 rounded text-sm ${
+        tab === t ? "bg-orange-600 text-white" : "bg-gray-200 text-gray-800"
+      }`}
+    >
+      {t.charAt(0).toUpperCase() + t.slice(1)}
+    </button>
+  ))}
+</div>
+
 
       {/* Dashboard */}
       {tab === "dashboard" && customer && (
