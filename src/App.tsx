@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
@@ -25,15 +25,19 @@ import HardwarePage from './components/features/HardwarePage';
 import MarketplaceIntegration from './components/features/MarketplaceIntegration';
 
 function App() {
+  const [cartItems, setCartItems] = useState(() => {
+     const stored = localStorage.getItem("no_of_cart_items");
+    return stored ? parseInt(stored) : 0;
+  });
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+      <Navbar cartItems={cartItems} />
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/restaurants" element={<RestaurantList />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/items" element={<Items />} />
+          <Route path="/cart" element={<Cart setCartItems={setCartItems} />} />
+          <Route path="/items" element={<Items cartItems={cartItems} setCartItems={setCartItems} />} />
           <Route path="/returns" element={<ReturnPolicy />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

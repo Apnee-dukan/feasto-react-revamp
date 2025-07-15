@@ -4,9 +4,13 @@ import queryString from "query-string";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Scan, ShoppingCart } from "lucide-react";
 import QRScanner from "./QRScanner";
-import { parse } from "path";
 
-const Items: React.FC = () => {
+interface ItemsProps {
+  cartItems: number;
+  setCartItems: (count: number) => void;
+}
+
+const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { branch = "" } = queryString.parse(location.search);
@@ -167,6 +171,7 @@ const Items: React.FC = () => {
 
     localStorage.setItem("cartDetailsData", JSON.stringify(updatedCart));
     localStorage.setItem("no_of_cart_items", newCartItems.length.toString());
+    setCartItems(newCartItems.length);
     setCart(updatedCart);
   };
 
@@ -289,6 +294,13 @@ const Items: React.FC = () => {
         </div>
       )}
 
+      {restaurant && !restaurant.currentBranchOpenStatus && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center font-medium">
+          Restaurant is currently <span className="font-bold">Closed</span>.
+          Please check back later.
+        </div>
+      )}
+
       <div className="min-h-screen px-4 py-6 bg-gray-50">
         {/* Dialog */}
         {showDialog && (
@@ -334,9 +346,9 @@ const Items: React.FC = () => {
 
         <div className="flex flex-wrap justify-center sm:justify-center gap-2 mb-4">
           <label className="text-lg font-medium text-gray-700">
-            Delivery Type:
+            Order Type:
           </label>
-          {/* Delivery Type Options */}
+          {/* Order Type Options */}
           {[
             { label: "Dine In", value: "1" },
             { label: "Take Away", value: "2" },
@@ -409,7 +421,7 @@ const Items: React.FC = () => {
                   </span>
                   <span>
                     ⭐ {restaurant?.rating ?? 4.2} •{" "}
-                    {restaurant?.eta ?? "45-50 MINS"}
+                    {restaurant?.eta ?? "25-30 MINS"}
                   </span>
                 </div>
 
@@ -434,12 +446,16 @@ const Items: React.FC = () => {
                     </p>
                     <button
                       className={`text-sm mt-2 border rounded-full px-3 py-1 transition ${
-                        parseInt( true || item.is_varient) <= 0 ||
+                        parseInt(true || item.is_varient) <= 0 ||
                         !restaurant.currentBranchOpenStatus
                           ? "text-gray-400 border-gray-300 cursor-not-allowed opacity-60"
                           : "text-gray-600 border-gray-300 hover:bg-gray-100"
                       }`}
-                      disabled={true || parseInt(item.is_varient) <= 0 || !restaurant.currentBranchOpenStatus}
+                      disabled={
+                        true ||
+                        parseInt(item.is_varient) <= 0 ||
+                        !restaurant.currentBranchOpenStatus
+                      }
                       onClick={() => {
                         handleViewMoreDetails(item);
                       }}
@@ -494,10 +510,21 @@ const Items: React.FC = () => {
 
         <button
           onClick={() => navigate("/cart")}
-          style={{ backgroundColor: "rgb(255 113 0)" }}
-          className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition"
+          style={{
+            backgroundColor: "rgb(255 113 0)",
+            position: "fixed",
+            bottom: "1.5rem",
+            right: "1.5rem",
+            zIndex: 50,
+          }}
+          className="text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition relative"
         >
           <ShoppingCart />
+          {cartItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {cartItems > 99 ? "99+" : cartItems}
+            </span>
+          )}
         </button>
       </div>
     </>

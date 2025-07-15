@@ -22,7 +22,7 @@ const FEATURES_DROPDOWN = [
   { label: 'Marketplace Integration', path: '/marketplace-integration' },
 ];
 
-const Navbar = () => {
+const Navbar = ({ cartItems }) => {
   const [open, setOpen] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -98,7 +98,7 @@ const Navbar = () => {
             ))}
 
             {/* Cart Icon */}
-            <ShoppingCartIcon />
+            <ShoppingCartIcon cartItems={cartItems} />
 
             {/* Login/User Dropdown */}
             {user ? (
@@ -211,13 +211,13 @@ const Navbar = () => {
 };
 
 // Shopping Cart Component
-const ShoppingCartIcon = () => {
+const ShoppingCartIcon = ({ cartItems }) => {
   const count = localStorage.getItem('no_of_cart_items') || '0';
   return (
     <Link to="/cart" className="relative p-2 text-gray-900 hover:text-orange-600">
       <ShoppingCart size={20} />
       <span className="absolute -top-1 -right-1 bg-orange-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-        {count}
+        {cartItems || count}
       </span>
     </Link>
   );
