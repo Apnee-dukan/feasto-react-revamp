@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Pencil } from "lucide-react";
 
 interface CartProps {
   setCartItems: (count: number) => void;
@@ -39,16 +39,18 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
   }, []);
 
   const fetchAddresses = async (uid: string) => {
-    const url = `https://feasto.com.my/web/api/customer/customer/customerAddressDetails?user_id=${uid}`;
     try {
-      const res = await axios.get(url, {
-        headers: {
-          "x-api-key": "Sdrops!23",
-          "Access-Control-Allow-Origin": "*",
-          crossdomain: true,
-          "Content-Type": "application/json;charset=UTF-8",
-        },
-      });
+      const res = await axios.get(
+        `https://feasto.com.my/web/api/customer/customer/customerAddressDetails?user_id=${uid}`,
+        {
+          headers: {
+            "x-api-key": "Sdrops!23",
+            "Access-Control-Allow-Origin": "*",
+            crossdomain: true,
+            "Content-Type": "application/json;charset=UTF-8",
+          },
+        }
+      );
       if (res.data.status) setAddresses(res.data.Data);
     } catch (err) {
       console.error(err);
@@ -123,7 +125,6 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
 
     const itemListUpdated = items.map((it) => {
       const hasToppings = Array.isArray(it.toppings) && it.toppings.length > 0;
-
       return {
         item_id: it.itemDetail?.id,
         item_name: it.itemDetail?.name,
@@ -185,78 +186,93 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
 
   return (
     <div className="py-8 px-4 md:px-12 max-w-screen-lg mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">🛒 Your Cart</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Cart Items */}
         <div className="space-y-4">
           {items.length ? (
-            items.map((it, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center bg-white p-4 rounded-lg shadow"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src={
-                      it.itemDetail?.item_type_name === "Non-Veg"
-                        ? "/dist/images/logo/non-veg.png"
-                        : "/dist/images/logo/veg.png"
-                    }
-                    alt={it.itemDetail?.item_type_name}
-                    className="w-4 h-4"
-                  />
-                  <div>
-                    <h2 className="font-medium">{it.itemDetail?.name}</h2>
+            items.map((it, idx) => {
+              const showEdit =
+                it.variant || (it.toppings?.length ?? 0) > 0 || (it.ingredients?.length ?? 0) > 0;
+
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3 sm:flex-row sm:items-center justify-between"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <img
+                        src={
+                          it.itemDetail?.item_type_name === "Non-Veg"
+                            ? "/dist/images/logo/non-veg.png"
+                            : "/dist/images/logo/veg.png"
+                        }
+                        alt="type"
+                        className="w-4 h-4"
+                      />
+                      <h2 className="text-lg font-semibold">{it.itemDetail?.name}</h2>
+                    </div>
 
                     {it.variant?.name && (
                       <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Variant:</span> {it.variant.name}
+                        <strong>Variant:</strong> {it.variant.name}
                       </p>
                     )}
 
                     {it.toppings?.length > 0 && (
                       <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Toppings:</span>{" "}
+                        <strong>Toppings:</strong>{" "}
                         {it.toppings.map((t: any) => t.topping_name).join(", ")}
                       </p>
                     )}
 
                     {it.ingredients?.length > 0 && (
                       <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Ingredients:</span>{" "}
+                        <strong>Ingredients:</strong>{" "}
                         {it.ingredients.map((ing: any) => ing.name).join(", ")}
                       </p>
                     )}
 
-                    <p className="text-sm text-gray-600 mt-1">
-                      ₹ {(
+                    <p className="text-sm mt-1 text-gray-600">
+                      {currency} {(
                         parseFloat(it.itemDetail?.price ?? 0) +
                         parseFloat(it.extra_amount ?? 0)
-                      ).toFixed(2)} × {it.qty}
+                      ).toFixed(2)}{" "}
+                      × {it.qty}
                     </p>
                   </div>
+
+                  <div className="flex items-center gap-3 mt-2 sm:mt-0 sm:flex-col">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => changeQty(idx, -1)}>
+                        <Minus className="w-5 h-5 text-red-600" />
+                      </button>
+                      <span>{it.qty}</span>
+                      <button onClick={() => changeQty(idx, 1)}>
+                        <Plus className="w-5 h-5 text-green-600" />
+                      </button>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      Subtotal: ₹{it.totalPrice}
+                    </p>
+
+                    {showEdit && (
+                      <button
+                        onClick={() =>
+                          window.location.href = `/itemdetails?branch=${branchId}&item_id=${it.itemDetail.id}&cartIndex=${idx}`
+                        }
+                        className="mt-2 text-orange-600 hover:text-orange-700 flex items-center gap-1 text-sm"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => changeQty(idx, -1)}>
-                    <Minus className="w-5 h-5 text-red-600" />
-                  </button>
-                  <span>{it.qty}</span>
-                  <button onClick={() => changeQty(idx, +1)}>
-                    <Plus className="w-5 h-5 text-green-600" />
-                  </button>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-            <p className="font-bold">Subtotal: ₹{it.totalPrice}</p>
-            <Button
-              variant="outline"
-              onClick={() =>
-                window.location.href = `/itemdetails?branch=${localStorage.getItem("branch_id")}&item_id=${it.itemDetail.id}&cartIndex=${idx}`
-              }
-            >
-              Edit
-            </Button>
-          </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-center text-gray-500 py-24">
               <img
@@ -268,63 +284,48 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
             </div>
           )}
 
-          {items.length ? (
-            <div className="pt-4 text-center">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  if (branchId) {
-                    window.location.href = `/items?branch=${branchId}`;
-                  }
-                }}
-              >
-                + Add More Items
-              </Button>
-            </div>
-          ) : (
+          {items.length > 0 && (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full mt-4"
               onClick={() => {
-                window.location.href = `/restaurants`;
+                if (branchId) {
+                  window.location.href = `/items?branch=${branchId}`;
+                }
               }}
             >
-              Add Items
+              + Add More Items
             </Button>
           )}
         </div>
 
+        {/* Summary */}
         <div className="space-y-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="font-semibold mb-2">Order Summary</h2>
-            <div className="flex justify-between py-1">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="font-semibold mb-4 text-lg">🧾 Order Summary</h2>
+            <div className="flex justify-between py-1 text-sm">
               <span>Sub‑Total:</span>
               <span>
                 {currency} {cartData.subTotal}
               </span>
             </div>
-            <div className="flex justify-between font-semibold py-1">
+            <div className="flex justify-between py-1 font-semibold text-base">
               <span>Total:</span>
               <span>
                 {currency} {cartData.grandTotal}
               </span>
             </div>
             <div className="mt-4 flex gap-2">
-              <Button
-                onClick={() => placeOrder()}
-                disabled={!items.length}
-                className="flex-1"
-              >
+              <Button onClick={placeOrder} disabled={!items.length} className="flex-1">
                 Place Order
               </Button>
               <Button
                 variant="outline"
-                onClick={() => clearCart()}
+                onClick={clearCart}
                 disabled={!items.length}
                 className="flex-1"
               >
-                Clear
+                Clear Cart
               </Button>
             </div>
           </div>

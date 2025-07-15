@@ -1,3 +1,5 @@
+// 👇 This version has EDIT + ADD functionality based on cartIndex
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import queryString from "query-string";
@@ -25,7 +27,6 @@ interface Variant {
   price: string;
   size_id: string;
 }
-
 interface ItemData {
   id: string;
   name: string;
@@ -40,7 +41,6 @@ interface ItemData {
   topping_details?: Topping[];
   item_type_name?: string;
 }
-
 interface RestaurantData {
   branch_id: string;
   restaurant_name: string;
@@ -116,15 +116,15 @@ const ItemDetails: React.FC = () => {
           if (d.varient_details?.length > 0) {
             setSelectedVariant(d.varient_details[0]);
           }
+
+          // 🔄 Pre-fill for edit
           if (cartIndex !== null) {
             const cartStorage = localStorage.getItem("cartDetailsData");
             if (cartStorage) {
               const parsed = JSON.parse(cartStorage);
               const cartItem = parsed.cartItemLists?.[cartIndex];
               if (cartItem && cartItem.itemDetail?.id === d.id) {
-                if (cartItem.variant) {
-                  setSelectedVariant(cartItem.variant);
-                }
+                if (cartItem.variant) setSelectedVariant(cartItem.variant);
                 if (cartItem.toppings?.length > 0) {
                   setSelectedToppings(cartItem.toppings.map((t: Topping) => t.topping_id));
                 }
@@ -170,7 +170,6 @@ const ItemDetails: React.FC = () => {
     if (!item) return;
 
     const cartCopy = [...cart.cartItemLists];
-    const existing = cartCopy.find((i) => i.itemDetail.id === item.id);
 
     const toppingDetails = toppings.filter((t) =>
       selectedToppings.includes(t.topping_id)
@@ -190,23 +189,27 @@ const ItemDetails: React.FC = () => {
 
     const total = (basePrice + toppingPrice).toFixed(2);
 
-    if (existing) {
-      existing.qty += 1;
-      existing.totalPrice = (existing.qty * parseFloat(total)).toFixed(2);
+    const newItem = {
+      itemDetail: {
+        id: item.id,
+        name: item.name,
+        price: total,
+      },
+      variant: selectedVariant,
+      toppings: toppingDetails,
+      ingredients: ingredientDetails || [],
+      qty: 1,
+      totalPrice: total,
+    };
+
+    // ✅ Edit existing item
+    if (cartIndex !== null && cartCopy[cartIndex]) {
+      cartCopy[cartIndex] = newItem;
     } else {
-      cartCopy.push({
-        itemDetail: {
-          id: item.id,
-          name: item.name,
-          price: total,
-        },
-        variant: selectedVariant,
-        toppings: toppingDetails,
-        ingredients: ingredientDetails || [],
-        qty: 1,
-        totalPrice: total,
-      });
+      // ➕ Add new item
+      cartCopy.push(newItem);
     }
+
     updateCart(cartCopy);
     window.location.href = "/cart";
   };
@@ -216,6 +219,7 @@ const ItemDetails: React.FC = () => {
 
   return (
     <>
+      {/* Restaurant Info (unchanged) */}
       <div className="bg-white border-b border-gray-200 rounded-b-2xl shadow-sm px-6 py-4 mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -240,6 +244,7 @@ const ItemDetails: React.FC = () => {
         </div>
       </div>
 
+      {/* Item Details + Customization UI */}
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <div className="mt-4 flex flex-col md:flex-row items-start gap-6">
           <img
@@ -327,6 +332,7 @@ const ItemDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* Sticky Bottom Bar */}
         <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex items-center justify-between gap-4 z-10">
           <div className="font-bold">
             {currency} {(
@@ -342,7 +348,8 @@ const ItemDetails: React.FC = () => {
             onClick={addToCart}
             className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-6 py-2 rounded-lg"
           >
-            Add to Cart <ShoppingCart className="ml-2 w-4 h-4" />
+            {cartIndex !== null ? "Update Cart" : "Add to Cart"}{" "}
+            <ShoppingCart className="ml-2 w-4 h-4" />
           </Button>
         </div>
       </div>
