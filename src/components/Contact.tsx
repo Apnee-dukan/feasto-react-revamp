@@ -25,9 +25,9 @@ const Contact = () => {
                 <div>
                   <h3 className="font-semibold mb-1">Address</h3>
                   <p className="text-gray-300">
-                    123 Jalan Bukit Bintang<br />
-                    50200 Kuala Lumpur<br />
-                    Malaysia
+                    Block C, Level 3, Unit 30, Oasis Corporate Park - Centum<br />
+                    Jalan Pju 1a/2 Ara Damansara, 47301 Petaling Jaya<br />
+                    Selangor Malaysia
                   </p>
                 </div>
               </div>
@@ -38,8 +38,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <p className="text-gray-300">+60 3-1234 5678</p>
-                  <p className="text-gray-300">+60 12-345 6789</p>
+                  <p className="text-gray-300">+60 16-321 6306</p>
                 </div>
               </div>
 
@@ -50,7 +49,6 @@ const Contact = () => {
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
                   <p className="text-gray-300">info@feasto.com.my</p>
-                  <p className="text-gray-300">reservations@feasto.com.my</p>
                 </div>
               </div>
 

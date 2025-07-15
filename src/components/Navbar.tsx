@@ -44,28 +44,35 @@ const Navbar = ({ cartItems }) => {
     navigate('/');
   };
 
+  const toggleMobileMenu = () => {
+    setOpen(!open);
+    setFeaturesDropdown(false);
+    setUserDropdown(false);
+  };
+
   return (
     <>
       <header className="bg-white shadow sticky top-0 z-50">
-        <div className="container mx-auto px-4 flex items-center justify-between py-2">
+        <div className="container mx-auto px-4 flex items-center justify-between py-3">
           {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="text-2xl font-bold text-orange-600">
-              <img
-                src="/dist/images/logo/logo-orange.png"
-                alt="Feasto"
-                style={{ height: '3rem' }}
-              />
-            </Link>
-          </div>
+          <Link to="/" className="flex items-center space-x-2">
+            <img
+              src="/dist/images/logo/logo-orange.png"
+              alt="Feasto"
+              className="h-10"
+            />
+          </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6 ml-auto">
             {/* Features Dropdown */}
-            <div className="relative group">
+            <div className="relative">
               <button
-                onClick={() => setFeaturesDropdown(!featuresDropdown)}
-                className="flex items-center space-x-1 text-gray-900 hover:text-orange-600 font-medium"
+                onClick={() => {
+                  setFeaturesDropdown(!featuresDropdown);
+                  setUserDropdown(false);
+                }}
+                className="flex items-center gap-1 text-gray-800 hover:text-orange-600 font-medium"
               >
                 <span>Features</span>
                 <ChevronDown size={16} />
@@ -86,28 +93,35 @@ const Navbar = ({ cartItems }) => {
               )}
             </div>
 
-            {/* Other Nav Links */}
+            {/* Nav Items */}
             {NAV_ITEMS.map((id) => (
               <Link
                 key={id}
                 to={`/${id}`}
-                className="text-gray-900 hover:text-orange-600 px-3 py-2 font-medium capitalize"
+                className="text-gray-800 hover:text-orange-600 font-medium capitalize"
               >
                 {id}
               </Link>
             ))}
 
-            {/* Cart Icon */}
+            {/* Cart */}
             <ShoppingCartIcon cartItems={cartItems} />
 
-            {/* Login/User Dropdown */}
+            {/* User/Login */}
             {user ? (
               <div className="relative">
-                <Button variant="ghost" onClick={() => setUserDropdown(!userDropdown)}>
-                  <User size={16} /> {user.name}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setUserDropdown(!userDropdown);
+                    setFeaturesDropdown(false);
+                  }}
+                >
+                  <User size={16} />
+                  <span className="ml-1">{user.name}</span>
                 </Button>
                 {userDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-20">
                     <Link
                       to="/AccountDetails"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -136,24 +150,24 @@ const Navbar = ({ cartItems }) => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setOpen(!open)}
-              className="text-gray-900 hover:text-orange-600 p-2"
-            >
+          <div className="md:hidden">
+            <button onClick={toggleMobileMenu} className="text-gray-800 p-2">
               {open ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Nav Panel */}
+        {/* Mobile Dropdown Menu */}
         {open && (
           <div className="md:hidden bg-white border-t px-4 pb-4 space-y-4">
-            {/* Features Collapsible Dropdown */}
+            {/* Features */}
             <div>
               <button
-                className="flex justify-between items-center w-full text-left text-gray-900 hover:text-orange-600 text-base font-medium"
-                onClick={() => setFeaturesDropdown(!featuresDropdown)}
+                className="flex justify-between items-center w-full text-left text-gray-900 font-medium"
+                onClick={() => {
+                  setFeaturesDropdown(!featuresDropdown);
+                  setUserDropdown(false);
+                }}
               >
                 <span>Features</span>
                 <ChevronDown
@@ -163,17 +177,13 @@ const Navbar = ({ cartItems }) => {
                   }`}
                 />
               </button>
-
               {featuresDropdown && (
-                <div className="mt-2 pl-4 space-y-2">
+                <div className="mt-2 pl-4 space-y-1">
                   {FEATURES_DROPDOWN.map(({ label, path }) => (
                     <Link
                       key={path}
                       to={path}
-                      onClick={() => {
-                        setOpen(false);
-                        setFeaturesDropdown(false);
-                      }}
+                      onClick={toggleMobileMenu}
                       className="block text-sm text-gray-700 hover:text-orange-600"
                     >
                       {label}
@@ -183,40 +193,85 @@ const Navbar = ({ cartItems }) => {
               )}
             </div>
 
-            {/* Other Nav Items */}
+            {/* Nav Items */}
             {NAV_ITEMS.map((id) => (
               <Link
                 key={id}
                 to={`/${id}`}
-                onClick={() => setOpen(false)}
-                className="block text-gray-900 hover:text-orange-600 text-base font-medium capitalize"
+                onClick={toggleMobileMenu}
+                className="block text-gray-900 font-medium capitalize hover:text-orange-600"
               >
                 {id}
               </Link>
             ))}
 
-            {/* Login */}
-            {!user && (
+            {/* Cart */}
+            <div>
+              <ShoppingCartIcon cartItems={cartItems} />
+            </div>
+
+            {/* User/Login */}
+            {user ? (
+              <div>
+                <button
+                  className="flex items-center gap-2 text-gray-900 font-medium"
+                  onClick={() => {
+                    setUserDropdown(!userDropdown);
+                    setFeaturesDropdown(false);
+                  }}
+                >
+                  <User size={16} />
+                  <span>{user.name}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      userDropdown ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {userDropdown && (
+                  <div className="mt-2 pl-4 space-y-1">
+                    <Link
+                      to="/AccountDetails"
+                      onClick={toggleMobileMenu}
+                      className="block text-sm text-gray-700 hover:text-orange-600"
+                    >
+                      Account Details
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        toggleMobileMenu();
+                      }}
+                      className="text-left w-full text-sm text-gray-700 hover:text-orange-600"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
               <Button variant="ghost" onClick={() => setLoginModal(true)}>
-                Login
+                <User size={16} />
+                <span className="ml-2">Login</span>
               </Button>
             )}
           </div>
         )}
       </header>
 
+      {/* Login Modal */}
       <LoginModal isOpen={loginModal} onClose={() => setLoginModal(false)} />
     </>
   );
 };
 
-// Shopping Cart Component
 const ShoppingCartIcon = ({ cartItems }) => {
   const count = localStorage.getItem('no_of_cart_items') || '0';
   return (
-    <Link to="/cart" className="relative p-2 text-gray-900 hover:text-orange-600">
-      <ShoppingCart size={20} />
-      <span className="absolute -top-1 -right-1 bg-orange-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+    <Link to="/cart" className="relative inline-block text-gray-800 hover:text-orange-600">
+      <ShoppingCart size={22} />
+      <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
         {cartItems || count}
       </span>
     </Link>
