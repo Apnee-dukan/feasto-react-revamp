@@ -56,7 +56,7 @@ const PosFeatures: React.FC = () => {
             Transform Dining with <span className="text-orange-500">Point of Sale</span>
           </h1>
           <p className="text-lg text-gray-600">
-            Bring new energy to your dining service with iPOS—a smart ordering
+            Bring new energy to your dining service with Feasto—a smart ordering
             system that speeds up service and keeps customers happy.
           </p>
           <button className="mt-4 px-8 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
