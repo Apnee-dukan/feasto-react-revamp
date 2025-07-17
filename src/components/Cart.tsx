@@ -221,7 +221,7 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
         }
       );
       if (res.data) {
-        window.location.href = `/items?branch=${branchId}`;
+        window.location.href = `/items?branch=${branchId}&table_id=${tableId}`;
         clearCart();
       }
     } catch (err) {
