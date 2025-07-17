@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import queryString from "query-string";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Scan, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Scan, ShoppingCart } from "lucide-react";
 import QRScanner from "./QRScanner";
 
 interface ItemsProps {
@@ -36,8 +36,11 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
           grandTotal: 0,
         };
   });
-  const [showDialog, setShowDialog] = useState(false);
-  const [dropdownValue, setDropdownValue] = useState("1");
+  const [dropdownValue, setDropdownValue] = useState(() => {
+    const value = localStorage.getItem("dropdownValue") || "1";
+    return value;
+  });
+  const [tableId, setTableId] = useState<string | null>();
 
   const API_HEADER = {
     headers: {
@@ -49,7 +52,6 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
 
   useEffect(() => {
     localStorage.setItem("deliveryType", "1");
-    localStorage.setItem("dropdownValue", "1");
   }, []);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
     localStorage.setItem("branch_id", params.branch as string);
     if (params.table_id) {
       localStorage.setItem("table_id", params.table_id as string);
+      setTableId(params.table_id as string);
       setDeliveryType("1");
       const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
         params.branch
@@ -68,7 +71,6 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
         .then((res) => {
           if (res.status) {
             setTableData(res.data.Data);
-            setShowDialog(true);
           }
         })
         .catch((err) => console.error("Error fetching table details:", err));
@@ -302,82 +304,99 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
       )}
 
       <div className="min-h-screen px-4 py-6 bg-gray-50">
-        {/* Dialog */}
-        {showDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
-              {tableData[0]?.available_for ? (
-                <>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                    Select Number of People
-                  </h2>
-                  <select
-                    value={dropdownValue}
-                    onChange={(e) => {
-                      setDropdownValue(e.target.value);
-                      localStorage.setItem("dropdownValue", e.target.value);
-                    }}
-                    className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  >
-                    {Array.from(
-                      { length: tableData[0]?.available_for },
-                      (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1}
-                        </option>
-                      )
-                    )}
-                  </select>
-                  <button
-                    onClick={() => setShowDialog(false)}
-                    className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition"
-                  >
-                    Submit
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p>No available seats</p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap justify-center sm:justify-center gap-2 mb-4">
-          <label className="text-lg font-medium text-gray-700">
-            Order Type:
-          </label>
-          {/* Order Type Options */}
-          {[
-            { label: "Dine In", value: "1" },
-            { label: "Take Away", value: "2" },
-            { label: "Delivery", value: "3" },
-          ].map((option) => (
-            <label
-              key={option.value}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition
-                  ${
-                    deliveryType === option.value
-                      ? "bg-orange-500 text-white border-orange-600"
-                      : "bg-white text-gray-800 hover:bg-orange-100 border-orange-300"
-                  }`}
-            >
-              <input
-                type="radio"
-                name="deliveryType"
-                value={option.value}
-                checked={deliveryType === option.value}
-                disabled={option.value === "3"}
-                onChange={() => {
-                  setDeliveryType(option.value);
-                  localStorage.setItem("deliveryType", option.value);
-                }}
-                className="form-radio text-orange-500 focus:ring-orange-500"
-              />
-              {option.label}
+        <div className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-between items-start sm:items-center gap-4 sm:gap-6 mb-6 px-2">
+          {/* Order Type Section */}
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-lg font-medium text-gray-700">
+              Order Type:
             </label>
-          ))}
+            {[
+              { label: "Dine In", value: "1" },
+              { label: "Take Away", value: "2" },
+              { label: "Delivery", value: "3" },
+            ].map((option) => {
+              const isDisabled = option.value === "2" || option.value === "3";
+              const isSelected = deliveryType === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition cursor-pointer ${
+                    isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                  } ${
+                    isSelected && !isDisabled
+                      ? "bg-orange-500 text-white border-orange-600"
+                      : !isDisabled
+                      ? "bg-white text-gray-800 hover:bg-orange-100 border-orange-300"
+                      : "bg-gray-100 text-gray-500 border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value={option.value}
+                    checked={isSelected}
+                    disabled={isDisabled}
+                    onChange={() => {
+                      setDeliveryType(option.value);
+                      localStorage.setItem("deliveryType", option.value);
+                    }}
+                    className="form-radio text-orange-500 focus:ring-orange-500"
+                  />
+                  {option.label}
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Number of People Section */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            {tableData && tableData[0]?.available_for ? (
+              <div className="flex items-center gap-3">
+                <label className="text-lg font-medium text-gray-700">
+                  No. of People:
+                </label>
+                <div className="flex items-center gap-2 border border-gray-300 rounded-full px-3 py-1">
+                  <button
+                    onClick={() => {
+                      const updatedValue = Math.max(
+                        1,
+                        parseInt(dropdownValue) - 1
+                      ).toString();
+                      setDropdownValue(updatedValue);
+                      localStorage.setItem("dropdownValue", updatedValue);
+                    }}
+                    className="px-2 py-1 rounded hover:bg-gray-200 disabled:opacity-40"
+                    disabled={parseInt(dropdownValue) <= 1}
+                  >
+                    <Minus className="w-5 h-5 text-red-600" />
+                  </button>
+                  <span className="min-w-[24px] text-center">
+                    {dropdownValue}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const updatedValue = Math.min(
+                        tableData[0]?.available_for,
+                        parseInt(dropdownValue) + 1
+                      ).toString();
+                      setDropdownValue(updatedValue);
+                      localStorage.setItem("dropdownValue", updatedValue);
+                    }}
+                    className="px-2 py-1 rounded hover:bg-gray-200 disabled:opacity-40 "
+                    disabled={
+                      parseInt(dropdownValue) >= tableData[0]?.available_for
+                    }
+                  >
+                    <Plus className="w-5 h-5 text-green-600" />
+                  </button>
+                </div>
+              </div>
+            ) : tableData.length > 0 ? (
+              <p className="text-sm text-red-600 font-medium">
+                No available seats
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {/* QR Code Scanner (Mobile only view) */}
@@ -446,7 +465,8 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
                     </p>
                     <button
                       className={`text-sm mt-2 border rounded-full px-3 py-1 transition ${
-                        parseInt(true || item.is_varient) <= 0 ||
+                        true ||
+                        parseInt(item.is_varient) <= 0 ||
                         !restaurant.currentBranchOpenStatus
                           ? "text-gray-400 border-gray-300 cursor-not-allowed opacity-60"
                           : "text-gray-600 border-gray-300 hover:bg-gray-100"
@@ -490,10 +510,12 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
                       </div>
                     ) : (
                       <button
-                        disabled={!restaurant.currentBranchOpenStatus}
+                        disabled={
+                          !restaurant.currentBranchOpenStatus || !tableId
+                        }
                         onClick={() => handleAdd(item)}
                         className={`mt-2 font-bold px-5 py-1 rounded-full transition ${
-                          !restaurant.currentBranchOpenStatus
+                          !restaurant.currentBranchOpenStatus || !tableId
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
                             : "bg-orange-500 hover:bg-orange-700 text-white"
                         }`}
