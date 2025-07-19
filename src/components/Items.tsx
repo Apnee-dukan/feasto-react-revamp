@@ -24,6 +24,7 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
   const [deliveryType, setDeliveryType] = useState("1");
   const [showQR, setShowQR] = useState(false);
   const [tableData, setTableData] = useState<any>({});
+  const [currentcy, setCurrency] = useState('');
   const [cart, setCart] = useState<any>(() => {
     const stored = localStorage.getItem("cartDetailsData");
     return stored
@@ -61,7 +62,7 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
       localStorage.setItem("table_id", params.table_id as string);
       setTableId(params.table_id as string);
       setDeliveryType("1");
-      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
+      const url = `https://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${
         params.branch
       }&table_id=${params.table_id}&sales_date=${
         new Date().toISOString().split("T")[0]
@@ -69,8 +70,10 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
       axios
         .get(url, API_HEADER)
         .then((res) => {
-          if (res.status) {
+          if (res.data.status) {
             setTableData(res.data.Data);
+          } else{
+            setTableData([]);
           }
         })
         .catch((err) => console.error("Error fetching table details:", err));
@@ -90,6 +93,7 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
       .then((res) => {
         if (res.data.status) {
           setRestaurant(res.data.Data[0]);
+          setCurrency(res.data.Data[0].currency_symbol || 'RM');
         }
       });
 
@@ -391,9 +395,9 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
                   </button>
                 </div>
               </div>
-            ) : tableData.length > 0 ? (
+            ) : tableData.length == 0 ? (
               <p className="text-sm text-red-600 font-medium">
-                No available seats
+                No Seats Available
               </p>
             ) : null}
           </div>
@@ -461,7 +465,7 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
                       </h2>
                     </div>
                     <p className="text-base font-medium text-black mt-1">
-                      ₹{item.price}
+                      {currentcy || 'RM' }{" "}{item.price}
                     </p>
                     <button
                       className={`text-sm mt-2 border rounded-full px-3 py-1 transition ${
@@ -511,11 +515,11 @@ const Items: React.FC<ItemsProps> = ({ cartItems, setCartItems }) => {
                     ) : (
                       <button
                         disabled={
-                          !restaurant.currentBranchOpenStatus || !tableId
+                          !restaurant.currentBranchOpenStatus || !tableId || tableData.length == 0
                         }
                         onClick={() => handleAdd(item)}
                         className={`mt-2 font-bold px-5 py-1 rounded-full transition ${
-                          !restaurant.currentBranchOpenStatus || !tableId
+                          !restaurant.currentBranchOpenStatus || !tableId || tableData.length == 0
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
                             : "bg-orange-500 hover:bg-orange-700 text-white"
                         }`}

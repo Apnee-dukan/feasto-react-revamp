@@ -55,14 +55,16 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
     }
 
     if (branch && table_id) {
-      const url = `http://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${branch}&table_id=${table_id}&sales_date=${
+      const url = `https://feasto.com.my/web/api/pos/touch_order/branchTableDetails?branch_id=${branch}&table_id=${table_id}&sales_date=${
         new Date().toISOString().split("T")[0]
       }`;
       axios
         .get(url, API_HEADER)
         .then((res) => {
-          if (res.status) {
+          if (res.data.status) {
             setTableData(res.data.Data);
+          } else {
+            setTableData([]);
           }
         })
         .catch((err) => console.error("Error fetching table details:", err));
@@ -77,6 +79,7 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
         .then((res) => {
           if (res.data.status) {
             setRestaurant(res.data.Data[0]);
+            setCurrency(res.data.Data[0].currency_symbol || 'RM');
           }
         });
     }
@@ -263,7 +266,7 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
                       <span>{it.qty}</span>
                       <button onClick={() => changeQty(idx, 1)}><Plus className="w-5 h-5 text-green-600" /></button>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800">Subtotal: ₹{it.totalPrice}</p>
+                    <p className="text-sm font-semibold text-gray-800">Subtotal: {currency} {it.totalPrice}</p>
                     {showEdit && (
                       <button onClick={() => (window.location.href = `/itemdetails?branch=${branchId}&item_id=${it.itemDetail.id}&cartIndex=${idx}`)} className="mt-2 text-orange-600 hover:text-orange-700 flex items-center gap-1 text-sm" title="Edit">
                         <Pencil className="w-4 h-4" />
@@ -341,15 +344,15 @@ const Cart: React.FC<CartProps> = ({ setCartItems }) => {
                     </button>
                   </div>
                 </>
-              ) : tableData.length > 0 ? (
+              ) : tableData.length == 0 ? (
                 <p className="text-sm text-red-600 font-medium mt-2">No available seats</p>
               ) : null}
             </div>
             
 
             <div className="mt-6 flex gap-2">
-              <Button onClick={placeOrder} disabled={!items.length} className="flex-1">Place Order</Button>
-              <Button variant="outline" onClick={clearCart} disabled={!items.length} className="flex-1">Clear Cart</Button>
+              <Button onClick={placeOrder} disabled={!items.length || tableData.length == 0} className="flex-1">Place Order</Button>
+              <Button variant="outline" onClick={clearCart} disabled={!items.length || tableData.length == 0} className="flex-1">Clear Cart</Button>
             </div>
           </div>
         </div>
